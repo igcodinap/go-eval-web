@@ -1,5 +1,18 @@
 import { ThemeToggle } from "@/components/theme-toggle";
 
+function GitHubIcon({ className }: { className?: string }) {
+  return (
+    <svg
+      viewBox="0 0 24 24"
+      aria-hidden="true"
+      className={className}
+      fill="currentColor"
+    >
+      <path d="M12 2a10 10 0 0 0-3.16 19.49c.5.09.68-.22.68-.48v-1.68c-2.78.61-3.37-1.18-3.37-1.18-.45-1.15-1.11-1.45-1.11-1.45-.9-.62.07-.61.07-.61 1 .07 1.53 1.03 1.53 1.03.89 1.52 2.33 1.08 2.9.83.09-.65.35-1.08.63-1.32-2.22-.25-4.55-1.11-4.55-4.95 0-1.09.39-1.98 1.03-2.68-.1-.25-.45-1.27.1-2.64 0 0 .84-.27 2.75 1.02a9.6 9.6 0 0 1 5 0c1.91-1.29 2.75-1.02 2.75-1.02.55 1.37.2 2.39.1 2.64.64.7 1.03 1.59 1.03 2.68 0 3.85-2.33 4.7-4.56 4.95.36.31.68.93.68 1.87v2.77c0 .27.18.58.69.48A10 10 0 0 0 12 2Z" />
+    </svg>
+  );
+}
+
 const stats = [
   { label: "LLM Calls Reduced", value: "5x", detail: "With compound scoring" },
   { label: "Core Dependencies", value: "0", detail: "Stdlib-first architecture" },
@@ -97,8 +110,9 @@ export default function Home() {
             href="https://github.com/igcodinap/go-eval"
             target="_blank"
             rel="noopener noreferrer"
-            className="hidden rounded-full border border-[var(--border)] bg-[var(--surface)] px-4 py-2 text-sm font-medium text-[var(--foreground)] transition hover:border-[var(--accent)] md:inline-flex"
+            className="hidden items-center gap-2 rounded-full border border-[var(--border)] bg-[var(--surface)] px-4 py-2 text-sm font-medium text-[var(--foreground)] transition hover:border-[var(--accent)] md:inline-flex"
           >
+            <GitHubIcon className="h-4 w-4" />
             GitHub
           </a>
           <ThemeToggle />
@@ -126,14 +140,13 @@ export default function Home() {
               href="https://github.com/igcodinap/go-eval"
               target="_blank"
               rel="noopener noreferrer"
-              className="inline-flex items-center rounded-full bg-[var(--accent)] px-6 py-3 text-sm font-semibold text-[var(--accent-foreground)] transition hover:opacity-90"
+              className="inline-flex items-center gap-2 rounded-full bg-[var(--accent)] px-6 py-3 text-sm font-semibold text-[var(--accent-foreground)] transition hover:opacity-90"
             >
+              <GitHubIcon className="h-4 w-4" />
               Explore Repository
             </a>
             <a
-              href="https://github.com/igcodinap/go-eval/tree/main/docs"
-              target="_blank"
-              rel="noopener noreferrer"
+              href="/docs/getting-started"
               className="inline-flex items-center rounded-full border border-[var(--border)] bg-[var(--surface-strong)] px-6 py-3 text-sm font-semibold text-[var(--foreground)] transition hover:border-[var(--accent)]"
             >
               Read Documentation
