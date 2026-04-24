@@ -257,7 +257,9 @@ func TestRAGAnswer(t *testing.T) {
                         onClick={() => setSelectedMetric(metric.name)}
                         className={`border-b border-[var(--table-border)] cursor-pointer hover:bg-[var(--hover,var(--surface))] ${i % 2 === 0 ? 'bg-[var(--table-stripe)]' : ''}`}
                       >
-                        <td className="py-2.5 font-mono text-[var(--accent)]">{metric.name}</td>
+                        <td className="py-2.5">
+                          <span className={`font-mono ${metric.type === 'judge' ? 'text-[var(--accent)]' : 'text-[#28a745]'}`}>{metric.name}</span>
+                        </td>
                         <td className="py-2.5 text-[var(--secondary)]">{metric.purpose}</td>
                         <td className="py-2.5 text-[var(--muted)] text-xs">{metric.howItWorks}</td>
                         <td className="py-2.5 font-mono text-[var(--muted)]">{metric.threshold}</td>
