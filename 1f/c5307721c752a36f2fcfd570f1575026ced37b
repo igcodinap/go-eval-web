@@ -1,0 +1,25 @@
+src/app/page.tsx
+  ccb8f2e623fef860 9,80-131,134-135,294-298,361-365,408-427
+src/data/benchmark-concept-details.ts
+  ccb8f2e623fef860 1-171
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.3.4",
+  "base_commit_sha": "1fc5307721c752a36f2fcfd570f1575026ced37b",
+  "prompts": {
+    "ccb8f2e623fef860": {
+      "agent_id": {
+        "tool": "opencode",
+        "id": "ses_23eb0442effegDMhFK9P12d6u5",
+        "model": "opencode-go/minimax-m2.7"
+      },
+      "human_author": "igcodinap",
+      "messages": [],
+      "total_additions": 256,
+      "total_deletions": 2,
+      "accepted_lines": 256,
+      "overriden_lines": 0
+    }
+  }
+}
