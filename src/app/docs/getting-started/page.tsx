@@ -26,16 +26,76 @@ const docsSections = [
 ];
 
 const metrics = [
-  { name: "Contains", type: "Deterministic", desc: "Output contains expected substring" },
-  { name: "Regex", type: "Deterministic", desc: "Output matches a regex pattern" },
-  { name: "JSONPath", type: "Deterministic", desc: "JSON value at path equals expected" },
-  { name: "FieldCount", type: "Deterministic", desc: "Minimum non-null top-level fields" },
-  { name: "Faithfulness", type: "LLM-as-judge", desc: "Output claims supported by Context" },
-  { name: "Hallucination", type: "LLM-as-judge", desc: "No facts invented outside Context" },
-  { name: "AnswerRelevancy", type: "LLM-as-judge", desc: "Output addresses Input" },
-  { name: "ContextPrecision", type: "LLM-as-judge", desc: "Retrieved docs are relevant to Input" },
-  { name: "GEval", type: "LLM-as-judge", desc: "Custom rubric with Criteria and Steps" },
-  { name: "Compound", type: "LLM-as-judge", desc: "Multiple rubric dimensions in one call" },
+  {
+    name: "Contains",
+    type: "Deterministic",
+    purpose: "Fast gate for mandatory text or keywords before expensive LLM checks",
+    howItWorks: "Simple substring search; pass if exact string found, fail otherwise",
+    threshold: "binary",
+  },
+  {
+    name: "Regex",
+    type: "Deterministic",
+    purpose: "Validate output format compliance (emails, IDs, codes, etc.)",
+    howItWorks: "Pattern match using regex; pass if matches, fail if doesn't match",
+    threshold: "binary",
+  },
+  {
+    name: "JSONPath",
+    type: "Deterministic",
+    purpose: "Assert specific values in structured JSON outputs (API responses, extracted data)",
+    howItWorks: "Extract value at your JSONPath, compare to expected value",
+    threshold: "binary",
+  },
+  {
+    name: "FieldCount",
+    type: "Deterministic",
+    purpose: "Enforce minimum field count in JSON outputs (completeness check)",
+    howItWorks: "Count non-null top-level keys; pass if >= configured minimum",
+    threshold: "config",
+  },
+  {
+    name: "Faithfulness",
+    type: "LLM-as-judge",
+    purpose: "Verify RAG outputs don't contradict the retrieved context",
+    howItWorks: "Judge checks each output claim against the Context, scoring the fraction supported",
+    threshold: "0.8",
+  },
+  {
+    name: "Hallucination",
+    type: "LLM-as-judge",
+    purpose: "Catch outputs that invent facts not present in Context",
+    howItWorks: "Judge identifies claims that don't appear in Context; score = non-invented / total",
+    threshold: "0.9",
+  },
+  {
+    name: "AnswerRelevancy",
+    type: "LLM-as-judge",
+    purpose: "Ensure outputs actually address the user's question",
+    howItWorks: "Judge evaluates whether Output directly answers Input, penalizing tangentially related responses",
+    threshold: "0.7",
+  },
+  {
+    name: "ContextPrecision",
+    type: "LLM-as-judge",
+    purpose: "Check if retrieved documents actually help answer the Input",
+    howItWorks: "Judge scores each retrieved doc on relevance to Input, reports mean precision",
+    threshold: "0.7",
+  },
+  {
+    name: "GEval",
+    type: "LLM-as-judge",
+    purpose: "Score custom criteria the built-in metrics don't cover",
+    howItWorks: "You define Criteria (rubric description) and optional Steps; judge applies your rubric",
+    threshold: "0.7",
+  },
+  {
+    name: "Compound",
+    type: "LLM-as-judge",
+    purpose: "Evaluate multiple quality dimensions in one judge call (reduces cost)",
+    howItWorks: "Multiple Dimensions with individual Rubrics evaluated together, returns per-dimension scores",
+    threshold: "per-dimension",
+  },
 ];
 
 export default function GettingStartedPage() {
@@ -138,7 +198,9 @@ func TestSupportReply(t *testing.T) {
               <tr className="border-b border-[var(--table-border)]">
                 <th className="py-2 text-left font-semibold text-[var(--foreground)]">Metric</th>
                 <th className="py-2 text-left font-semibold text-[var(--foreground)]">Type</th>
-                <th className="py-2 text-left font-semibold text-[var(--foreground)]">Description</th>
+                <th className="py-2 text-left font-semibold text-[var(--foreground)]">Purpose</th>
+                <th className="py-2 text-left font-semibold text-[var(--foreground)]">How It Works</th>
+                <th className="py-2 text-left font-semibold text-[var(--foreground)]">Threshold</th>
               </tr>
             </thead>
             <tbody>
@@ -150,7 +212,9 @@ func TestSupportReply(t *testing.T) {
                       {m.type}
                     </span>
                   </td>
-                  <td className="py-2.5 text-[var(--secondary)]">{m.desc}</td>
+                  <td className="py-2.5 text-[var(--secondary)]">{m.purpose}</td>
+                  <td className="py-2.5 text-[var(--muted)] text-xs">{m.howItWorks}</td>
+                  <td className="py-2.5 font-mono text-[var(--muted)]">{m.threshold}</td>
                 </tr>
               ))}
             </tbody>

@@ -20,16 +20,76 @@ const navItems = [
 ];
 
 const metrics = [
-  { name: "Faithfulness", type: "judge", measures: "Output claims supported by Context", threshold: "0.8" },
-  { name: "Hallucination", type: "judge", measures: "Output does not invent facts outside Context", threshold: "0.9" },
-  { name: "AnswerRelevancy", type: "judge", measures: "Output addresses Input", threshold: "0.7" },
-  { name: "ContextPrecision", type: "judge", measures: "Retrieved docs are relevant to Input", threshold: "0.7" },
-  { name: "GEval", type: "judge", measures: "Custom rubric with Criteria and Steps", threshold: "0.7" },
-  { name: "Compound", type: "judge", measures: "Multiple rubric dimensions in one call", threshold: "per-dimension" },
-  { name: "Contains", type: "deterministic", measures: "Output contains expected substring", threshold: "binary" },
-  { name: "Regex", type: "deterministic", measures: "Output matches a regex pattern", threshold: "binary" },
-  { name: "JSONPath", type: "deterministic", measures: "JSON output value at path equals expected", threshold: "binary" },
-  { name: "FieldCount", type: "deterministic", measures: "Minimum non-null top-level JSON fields", threshold: "config" },
+  {
+    name: "Faithfulness",
+    type: "judge",
+    purpose: "Verify RAG outputs don't contradict the retrieved context",
+    howItWorks: "Judge checks each output claim against the Context, scoring the fraction that's supported",
+    threshold: "0.8",
+  },
+  {
+    name: "Hallucination",
+    type: "judge",
+    purpose: "Catch outputs that invent facts not present in Context",
+    howItWorks: "Judge identifies claims that don't appear in Context; score = non-invented / total",
+    threshold: "0.9",
+  },
+  {
+    name: "AnswerRelevancy",
+    type: "judge",
+    purpose: "Ensure outputs actually address the user's question",
+    howItWorks: "Judge evaluates whether Output directly answers Input, penalizing tangentially related responses",
+    threshold: "0.7",
+  },
+  {
+    name: "ContextPrecision",
+    type: "judge",
+    purpose: "Check if retrieved documents actually help answer the Input",
+    howItWorks: "Judge scores each retrieved doc on relevance to Input, reports mean precision",
+    threshold: "0.7",
+  },
+  {
+    name: "GEval",
+    type: "judge",
+    purpose: "Score custom criteria the built-in metrics don't cover",
+    howItWorks: "You define Criteria (rubric description) and optional Steps; judge applies your rubric",
+    threshold: "0.7",
+  },
+  {
+    name: "Compound",
+    type: "judge",
+    purpose: "Evaluate multiple quality dimensions in one judge call (reduces cost)",
+    howItWorks: "Multiple Dimensions with individual Rubrics evaluated together, returns per-dimension scores",
+    threshold: "per-dimension",
+  },
+  {
+    name: "Contains",
+    type: "deterministic",
+    purpose: "Fast gate for mandatory text or keywords before expensive LLM checks",
+    howItWorks: "Simple substring search; pass if exact string found, fail otherwise",
+    threshold: "binary",
+  },
+  {
+    name: "Regex",
+    type: "deterministic",
+    purpose: "Validate output format compliance (emails, IDs, codes, etc.)",
+    howItWorks: "Pattern match using regex; pass if matches, fail if doesn't match",
+    threshold: "binary",
+  },
+  {
+    name: "JSONPath",
+    type: "deterministic",
+    purpose: "Assert specific values in structured JSON outputs (API responses, extracted data)",
+    howItWorks: "Extract value at your JSONPath, compare to expected value",
+    threshold: "binary",
+  },
+  {
+    name: "FieldCount",
+    type: "deterministic",
+    purpose: "Enforce minimum field count in JSON outputs (completeness check)",
+    howItWorks: "Count non-null top-level keys; pass if >= configured minimum",
+    threshold: "config",
+  },
 ];
 
 export default function Home() {
@@ -149,15 +209,17 @@ func TestRAGAnswer(t *testing.T) {
                   <thead>
                     <tr className="border-b border-[var(--table-border)]">
                       <th className="py-2 text-left font-semibold text-[var(--foreground)]">Metric</th>
-                      <th className="py-2 text-left font-semibold text-[var(--foreground)]">Measures</th>
-                      <th className="py-2 text-left font-semibold text-[var(--foreground)]">Default Threshold</th>
+                      <th className="py-2 text-left font-semibold text-[var(--foreground)]">Purpose</th>
+                      <th className="py-2 text-left font-semibold text-[var(--foreground)]">How It Works</th>
+                      <th className="py-2 text-left font-semibold text-[var(--foreground)]">Threshold</th>
                     </tr>
                   </thead>
                   <tbody>
                     {metrics.map((metric, i) => (
                       <tr key={metric.name} className={`border-b border-[var(--table-border)] ${i % 2 === 0 ? 'bg-[var(--table-stripe)]' : ''}`}>
                         <td className="py-2.5 font-mono text-[var(--accent)]">{metric.name}</td>
-                        <td className="py-2.5 text-[var(--secondary)]">{metric.measures}</td>
+                        <td className="py-2.5 text-[var(--secondary)]">{metric.purpose}</td>
+                        <td className="py-2.5 text-[var(--muted)] text-xs">{metric.howItWorks}</td>
                         <td className="py-2.5 font-mono text-[var(--muted)]">{metric.threshold}</td>
                       </tr>
                     ))}
