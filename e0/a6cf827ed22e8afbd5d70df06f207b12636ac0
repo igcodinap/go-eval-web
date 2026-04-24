@@ -1,0 +1,33 @@
+src/app/docs/layout.tsx
+  ccb8f2e623fef860 1,37-66,69-72,74-75,78,83,93,95-97,100-110,113
+src/app/globals.css
+  ccb8f2e623fef860 4-16,18-22,26-38,40-44,48,50-53,60-87,91-101,104-106,108-128
+src/app/page.tsx
+  ccb8f2e623fef860 1-2,7,13-19,22-32,37-56,58,63,65-66,68,70-71,73-109,112,114,117-119,121-125,127-128,130-228,230-240,242,246
+src/app/docs/getting-started/page.tsx
+  ccb8f2e623fef860 10-14,20,22-24,28-40,43-48,52-54,57-71,73-74,81-88,90,93-96,98,102,104,108-128,133-141,144-155,161-164,166-173,176-179,181-192,195-198,200-201,204-210,214-226,231
+src/app/layout.tsx
+  ccb8f2e623fef860 27,36
+src/components/theme-toggle.tsx
+  ccb8f2e623fef860 33,36-39,42
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.3.4",
+  "base_commit_sha": "e0a6cf827ed22e8afbd5d70df06f207b12636ac0",
+  "prompts": {
+    "ccb8f2e623fef860": {
+      "agent_id": {
+        "tool": "opencode",
+        "id": "ses_23eb0442effegDMhFK9P12d6u5",
+        "model": "opencode-go/minimax-m2.7"
+      },
+      "human_author": "igcodinap",
+      "messages": [],
+      "total_additions": 541,
+      "total_deletions": 606,
+      "accepted_lines": 540,
+      "overriden_lines": 0
+    }
+  }
+}
