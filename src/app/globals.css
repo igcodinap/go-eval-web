@@ -20,6 +20,7 @@
   --table-border: #d0d7de;
   --table-header-bg: #f6f8fa;
   --table-stripe: #f6f8fa;
+  --hover: #eceef0;
 }
 
 :root[data-theme="dark"] {
@@ -42,6 +43,7 @@
   --table-border: #30363d;
   --table-header-bg: #21262d;
   --table-stripe: #0d1117;
+  --hover: #1c2128;
 }
 
 body {
@@ -125,4 +127,17 @@ h1, h2, h3, h4, h5, h6 {
 .metric-tag.judge {
   border-color: var(--accent);
   color: var(--accent);
+}
+
+@keyframes slide-in {
+  from {
+    transform: translateX(100%);
+  }
+  to {
+    transform: translateX(0);
+  }
+}
+
+.animate-slide-in {
+  animation: slide-in 0.2s ease-out;
 }

@@ -1,6 +1,11 @@
+"use client";
+
 import Image from "next/image";
 import Link from "next/link";
+import { useState } from "react";
 import { ThemeToggle } from "@/components/theme-toggle";
+import { SlideOver } from "@/components/slide-over";
+import { metricDetails, MetricDetail } from "@/data/metric-details";
 
 function GitHubIcon({ className }: { className?: string }) {
   return (
@@ -20,79 +25,60 @@ const navItems = [
 ];
 
 const metrics = [
-  {
-    name: "Faithfulness",
-    type: "judge",
-    purpose: "Verify RAG outputs don't contradict the retrieved context",
-    howItWorks: "Judge checks each output claim against the Context, scoring the fraction that's supported",
-    threshold: "0.8",
-  },
-  {
-    name: "Hallucination",
-    type: "judge",
-    purpose: "Catch outputs that invent facts not present in Context",
-    howItWorks: "Judge identifies claims that don't appear in Context; score = non-invented / total",
-    threshold: "0.9",
-  },
-  {
-    name: "AnswerRelevancy",
-    type: "judge",
-    purpose: "Ensure outputs actually address the user's question",
-    howItWorks: "Judge evaluates whether Output directly answers Input, penalizing tangentially related responses",
-    threshold: "0.7",
-  },
-  {
-    name: "ContextPrecision",
-    type: "judge",
-    purpose: "Check if retrieved documents actually help answer the Input",
-    howItWorks: "Judge scores each retrieved doc on relevance to Input, reports mean precision",
-    threshold: "0.7",
-  },
-  {
-    name: "GEval",
-    type: "judge",
-    purpose: "Score custom criteria the built-in metrics don't cover",
-    howItWorks: "You define Criteria (rubric description) and optional Steps; judge applies your rubric",
-    threshold: "0.7",
-  },
-  {
-    name: "Compound",
-    type: "judge",
-    purpose: "Evaluate multiple quality dimensions in one judge call (reduces cost)",
-    howItWorks: "Multiple Dimensions with individual Rubrics evaluated together, returns per-dimension scores",
-    threshold: "per-dimension",
-  },
-  {
-    name: "Contains",
-    type: "deterministic",
-    purpose: "Fast gate for mandatory text or keywords before expensive LLM checks",
-    howItWorks: "Simple substring search; pass if exact string found, fail otherwise",
-    threshold: "binary",
-  },
-  {
-    name: "Regex",
-    type: "deterministic",
-    purpose: "Validate output format compliance (emails, IDs, codes, etc.)",
-    howItWorks: "Pattern match using regex; pass if matches, fail if doesn't match",
-    threshold: "binary",
-  },
-  {
-    name: "JSONPath",
-    type: "deterministic",
-    purpose: "Assert specific values in structured JSON outputs (API responses, extracted data)",
-    howItWorks: "Extract value at your JSONPath, compare to expected value",
-    threshold: "binary",
-  },
-  {
-    name: "FieldCount",
-    type: "deterministic",
-    purpose: "Enforce minimum field count in JSON outputs (completeness check)",
-    howItWorks: "Count non-null top-level keys; pass if >= configured minimum",
-    threshold: "config",
-  },
+  { name: "Faithfulness", type: "judge", purpose: "Verify RAG outputs don't contradict the retrieved context", howItWorks: "Judge checks each output claim against the Context, scoring the fraction that's supported", threshold: "0.8" },
+  { name: "Hallucination", type: "judge", purpose: "Catch outputs that invent facts not present in Context", howItWorks: "Judge identifies claims that don't appear in Context; score = non-invented / total", threshold: "0.9" },
+  { name: "AnswerRelevancy", type: "judge", purpose: "Ensure outputs actually address the user's question", howItWorks: "Judge evaluates whether Output directly answers Input, penalizing tangentially related responses", threshold: "0.7" },
+  { name: "ContextPrecision", type: "judge", purpose: "Check if retrieved documents actually help answer the Input", howItWorks: "Judge scores each retrieved doc on relevance to Input, reports mean precision", threshold: "0.7" },
+  { name: "GEval", type: "judge", purpose: "Score custom criteria the built-in metrics don't cover", howItWorks: "You define Criteria (rubric description) and optional Steps; judge applies your rubric", threshold: "0.7" },
+  { name: "Compound", type: "judge", purpose: "Evaluate multiple quality dimensions in one judge call (reduces cost)", howItWorks: "Multiple Dimensions with individual Rubrics evaluated together, returns per-dimension scores", threshold: "per-dimension" },
+  { name: "Contains", type: "deterministic", purpose: "Fast gate for mandatory text or keywords before expensive LLM checks", howItWorks: "Simple substring search; pass if exact string found, fail otherwise", threshold: "binary" },
+  { name: "Regex", type: "deterministic", purpose: "Validate output format compliance (emails, IDs, codes, etc.)", howItWorks: "Pattern match using regex; pass if matches, fail if doesn't match", threshold: "binary" },
+  { name: "JSONPath", type: "deterministic", purpose: "Assert specific values in structured JSON outputs (API responses, extracted data)", howItWorks: "Extract value at your JSONPath, compare to expected value", threshold: "binary" },
+  { name: "FieldCount", type: "deterministic", purpose: "Enforce minimum field count in JSON outputs (completeness check)", howItWorks: "Count non-null top-level keys; pass if >= configured minimum", threshold: "config" },
 ];
 
+function MetricDetailPanel({ metric }: { metric: MetricDetail }) {
+  return (
+    <div className="space-y-6">
+      <div className="flex items-center gap-3">
+        <span className={`metric-tag ${metric.type}`}>{metric.type}</span>
+        <span className="font-mono text-sm text-[var(--muted)]">threshold: {metric.threshold}</span>
+      </div>
+
+      <div>
+        <h3 className="text-sm font-semibold text-[var(--muted)] uppercase tracking-wide mb-2">Purpose</h3>
+        <p className="text-[var(--foreground)]">{metric.purpose}</p>
+      </div>
+
+      <div>
+        <h3 className="text-sm font-semibold text-[var(--muted)] uppercase tracking-wide mb-2">How It Works</h3>
+        <p className="text-[var(--secondary)]">{metric.howItWorks}</p>
+      </div>
+
+      <div>
+        <h3 className="text-sm font-semibold text-[var(--muted)] uppercase tracking-wide mb-3">Example</h3>
+        <div className="space-y-4">
+          <div>
+            <p className="text-xs text-[var(--muted)] mb-2">Code</p>
+            <pre className="bg-[var(--code-bg)] border border-[var(--border)] rounded-md px-4 py-3 font-mono text-sm overflow-x-auto">
+              <code>{metric.example.code}</code>
+            </pre>
+          </div>
+          <div>
+            <p className="text-xs text-[var(--muted)] mb-2">Output</p>
+            <pre className="bg-[var(--code-bg)] border border-[var(--border)] rounded-md px-4 py-3 font-mono text-sm text-[var(--secondary)]">
+              <code>{metric.example.output}</code>
+            </pre>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export default function Home() {
+  const [selectedMetric, setSelectedMetric] = useState<string | null>(null);
+
   return (
     <div className="min-h-screen">
       <header className="sticky top-0 z-50 border-b border-[var(--border)] bg-[var(--header-bg)]">
@@ -105,32 +91,18 @@ export default function Home() {
             </Link>
             <nav className="hidden md:flex items-center gap-1 text-sm">
               {navItems.map((item) => (
-                <a
-                  key={item.label}
-                  href={item.href}
-                  className="px-3 py-2 text-[var(--secondary)] hover:text-[var(--foreground)] hover:no-underline"
-                >
+                <a key={item.label} href={item.href} className="px-3 py-2 text-[var(--secondary)] hover:text-[var(--foreground)] hover:no-underline">
                   {item.label}
                 </a>
               ))}
             </nav>
           </div>
           <div className="flex items-center gap-3">
-            <a
-              href="https://join.slack.com/t/goeval/shared_invite/zt-3vz9qlmpw-uBiyB_oZOFsjntlbP7l0EQ"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="flex items-center gap-2 text-sm text-[var(--secondary)] hover:text-[var(--foreground)]"
-            >
+            <a href="https://join.slack.com/t/goeval/shared_invite/zt-3vz9qlmpw-uBiyB_oZOFsjntlbP7l0EQ" target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 text-sm text-[var(--secondary)] hover:text-[var(--foreground)]">
               <Image src="/slack.svg" alt="Slack" width={20} height={20} className="h-5 w-5" />
               <span className="hidden sm:inline">Slack</span>
             </a>
-            <a
-              href="https://github.com/igcodinap/go-eval"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="flex items-center gap-2 text-sm text-[var(--secondary)] hover:text-[var(--foreground)]"
-            >
+            <a href="https://github.com/igcodinap/go-eval" target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 text-sm text-[var(--secondary)] hover:text-[var(--foreground)]">
               <GitHubIcon className="h-5 w-5" />
               <span className="hidden sm:inline">GitHub</span>
             </a>
@@ -211,7 +183,7 @@ func TestRAGAnswer(t *testing.T) {
             <section id="metrics" className="mb-12 scroll-mt-20">
               <h2 className="mb-4 text-2xl font-semibold border-b border-[var(--border)] pb-2">Metrics</h2>
               <p className="mb-4 text-[var(--secondary)]">
-                Two categories: <span className="metric-tag judge">LLM-as-Judge</span> for semantic evaluation, <span className="metric-tag deterministic">Deterministic</span> for fast prechecks.
+                Two categories: <span className="metric-tag judge">LLM-as-Judge</span> for semantic evaluation, <span className="metric-tag deterministic">Deterministic</span> for fast prechecks. Click any metric for code example and output.
               </p>
               <div className="overflow-x-auto">
                 <table className="w-full text-sm border-collapse">
@@ -225,7 +197,11 @@ func TestRAGAnswer(t *testing.T) {
                   </thead>
                   <tbody>
                     {metrics.map((metric, i) => (
-                      <tr key={metric.name} className={`border-b border-[var(--table-border)] ${i % 2 === 0 ? 'bg-[var(--table-stripe)]' : ''}`}>
+                      <tr
+                        key={metric.name}
+                        onClick={() => setSelectedMetric(metric.name)}
+                        className={`border-b border-[var(--table-border)] cursor-pointer hover:bg-[var(--hover,var(--surface))] ${i % 2 === 0 ? 'bg-[var(--table-stripe)]' : ''}`}
+                      >
                         <td className="py-2.5 font-mono text-[var(--accent)]">{metric.name}</td>
                         <td className="py-2.5 text-[var(--secondary)]">{metric.purpose}</td>
                         <td className="py-2.5 text-[var(--muted)] text-xs">{metric.howItWorks}</td>
@@ -240,7 +216,7 @@ func TestRAGAnswer(t *testing.T) {
             <section id="benchmarks" className="mb-12 scroll-mt-20">
               <h2 className="mb-4 text-2xl font-semibold border-b border-[var(--border)] pb-2">Benchmarks</h2>
               <p className="mb-4 text-[var(--secondary)]">
-                Compare evaluation runs across prompt or model changes using <code className="bg-[var(--code-bg)] px-1.5 py-0.5 rounded text-[var(--accent)]">go test -bench</code> and <code className="bg-[var(--code-bg)] px-1.5 py-0.5 rounded text-[var(--accent)]">benchstat</code>.
+                Track latency, token usage, and score quality across prompt or model changes using standard Go benchmarks and <code className="bg-[var(--code-bg)] px-1.5 py-0.5 rounded text-[var(--accent)]">benchstat</code>.
               </p>
               <pre className="bg-[var(--code-bg)] border border-[var(--border)] rounded-md px-4 py-3 font-mono text-sm overflow-x-auto">
                 <code>{`func BenchmarkRAGLatency(b *testing.B) {
@@ -250,6 +226,52 @@ func TestRAGAnswer(t *testing.T) {
 	eval.Bench(b, r, eval.Faithfulness{Threshold: 0.8}, c)
 }`}</code>
               </pre>
+
+              <div className="mt-6 space-y-4">
+                <h3 className="text-sm font-semibold text-[var(--foreground)]">Metrics Tracked</h3>
+                <div className="grid gap-3 md:grid-cols-2">
+                  {[
+                    { label: "ns/op", desc: "Latency per judge call" },
+                    { label: "tokens/op", desc: "Mean tokens consumed per call" },
+                    { label: "score_mean", desc: "Average score across iterations" },
+                    { label: "score_stddev", desc: "Score consistency across runs" },
+                  ].map((m) => (
+                    <div key={m.label} className="flex items-center gap-3 p-3 border border-[var(--border)] rounded-md bg-[var(--surface)]">
+                      <code className="text-xs bg-[var(--code-bg)] px-2 py-1 rounded text-[var(--accent)]">{m.label}</code>
+                      <span className="text-sm text-[var(--secondary)]">{m.desc}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              <div className="mt-6">
+                <h3 className="text-sm font-semibold text-[var(--foreground)] mb-3">Compare Runs</h3>
+                <pre className="bg-[var(--code-bg)] border border-[var(--border)] rounded-md px-4 py-3 font-mono text-sm overflow-x-auto">
+                  <code>{`# Baseline
+GOEVAL=1 go test -bench=. -count=5 > old.txt
+
+# After changes
+GOEVAL=1 go test -bench=. -count=5 > new.txt
+
+# Statistical comparison
+benchstat old.txt new.txt`}</code>
+                </pre>
+              </div>
+
+              <div className="mt-6">
+                <h3 className="text-sm font-semibold text-[var(--foreground)] mb-3">Persist Results</h3>
+                <p className="mb-3 text-sm text-[var(--secondary)]">
+                  Configure a <code className="bg-[var(--code-bg)] px-1 py-0.5 rounded text-[var(--accent)]">ResultSink</code> to write detailed JSONL logs for every run:
+                </p>
+                <pre className="bg-[var(--code-bg)] border border-[var(--border)] rounded-md px-4 py-3 font-mono text-sm overflow-x-auto">
+                  <code>{`r := eval.NewRunner(judge,
+	eval.WithResultSink(eval.DefaultResultSink()),
+)`}</code>
+                </pre>
+                <p className="mt-2 text-sm text-[var(--muted)]">
+                  Set <code className="bg-[var(--code-bg)] px-1 py-0.5 rounded text-[var(--accent)]">GOEVAL_RESULTS_DIR=/path/to/dir</code> to write <code className="bg-[var(--code-bg)] px-1 py-0.5 rounded text-[var(--accent)]">results.jsonl</code>.
+                </p>
+              </div>
             </section>
 
             <section id="cicd" className="mb-12 scroll-mt-20">
@@ -306,12 +328,20 @@ benchstat old.txt new.txt`}</code>
         <div className="mx-auto max-w-7xl px-4 py-6 md:px-8">
           <p className="text-sm text-[var(--muted)]">
             go-eval v0.2 — MIT License —{" "}
-            <a href="https://github.com/igcodinap/go-eval" className="text-[var(--accent)]">
-              github.com/igcodinap/go-eval
-            </a>
+            <a href="https://github.com/igcodinap/go-eval" className="text-[var(--accent)]">github.com/igcodinap/go-eval</a>
           </p>
         </div>
       </footer>
+
+      <SlideOver
+        isOpen={selectedMetric !== null}
+        onClose={() => setSelectedMetric(null)}
+        title={selectedMetric || ""}
+      >
+        {selectedMetric && metricDetails[selectedMetric] && (
+          <MetricDetailPanel metric={metricDetails[selectedMetric]} />
+        )}
+      </SlideOver>
     </div>
   );
 }
