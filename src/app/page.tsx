@@ -6,6 +6,7 @@ import { useState } from "react";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { SlideOver } from "@/components/slide-over";
 import { metricDetails, MetricDetail } from "@/data/metric-details";
+import { benchmarkMetricDetails, conceptDetails, BenchmarkMetricDetail, ConceptDetail } from "@/data/benchmark-concept-details";
 
 function GitHubIcon({ className }: { className?: string }) {
   return (
@@ -76,8 +77,62 @@ function MetricDetailPanel({ metric }: { metric: MetricDetail }) {
   );
 }
 
+function BenchmarkMetricPanel({ metric }: { metric: BenchmarkMetricDetail }) {
+  return (
+    <div className="space-y-6">
+      <div>
+        <p className="text-sm text-[var(--secondary)] mb-4">{metric.description}</p>
+      </div>
+
+      <div>
+        <h3 className="text-sm font-semibold text-[var(--muted)] uppercase tracking-wide mb-3">Details</h3>
+        <div className="text-sm text-[var(--foreground)] whitespace-pre-wrap">
+          {metric.details}
+        </div>
+      </div>
+
+      {metric.example?.output && (
+        <div>
+          <h3 className="text-sm font-semibold text-[var(--muted)] uppercase tracking-wide mb-3">Example Output</h3>
+          <pre className="bg-[var(--code-bg)] border border-[var(--border)] rounded-md px-4 py-3 font-mono text-sm text-[var(--secondary)]">
+            <code>{metric.example.output}</code>
+          </pre>
+        </div>
+      )}
+    </div>
+  );
+}
+
+function ConceptPanel({ concept }: { concept: ConceptDetail }) {
+  return (
+    <div className="space-y-6">
+      <div>
+        <p className="text-sm text-[var(--secondary)] mb-4">{concept.description}</p>
+      </div>
+
+      <div>
+        <h3 className="text-sm font-semibold text-[var(--muted)] uppercase tracking-wide mb-3">Details</h3>
+        <div className="text-sm text-[var(--foreground)] whitespace-pre-wrap">
+          {concept.details}
+        </div>
+      </div>
+
+      {concept.example?.code && (
+        <div>
+          <h3 className="text-sm font-semibold text-[var(--muted)] uppercase tracking-wide mb-3">Example</h3>
+          <pre className="bg-[var(--code-bg)] border border-[var(--border)] rounded-md px-4 py-3 font-mono text-sm overflow-x-auto">
+            <code>{concept.example.code}</code>
+          </pre>
+        </div>
+      )}
+    </div>
+  );
+}
+
 export default function Home() {
   const [selectedMetric, setSelectedMetric] = useState<string | null>(null);
+  const [selectedBenchMetric, setSelectedBenchMetric] = useState<string | null>(null);
+  const [selectedConcept, setSelectedConcept] = useState<string | null>(null);
 
   return (
     <div className="min-h-screen">
@@ -236,7 +291,11 @@ func TestRAGAnswer(t *testing.T) {
                     { label: "score_mean", desc: "Average score across iterations" },
                     { label: "score_stddev", desc: "Score consistency across runs" },
                   ].map((m) => (
-                    <div key={m.label} className="flex items-center gap-3 p-3 border border-[var(--border)] rounded-md bg-[var(--surface)]">
+                    <div
+                      key={m.label}
+                      onClick={() => setSelectedBenchMetric(m.label)}
+                      className="flex items-center gap-3 p-3 border border-[var(--border)] rounded-md bg-[var(--surface)] cursor-pointer hover:border-[var(--accent)] transition-colors"
+                    >
                       <code className="text-xs bg-[var(--code-bg)] px-2 py-1 rounded text-[var(--accent)]">{m.label}</code>
                       <span className="text-sm text-[var(--secondary)]">{m.desc}</span>
                     </div>
@@ -299,7 +358,11 @@ benchstat old.txt new.txt`}</code>
                   { term: "Judge", desc: "Your implementation of LLM-as-judge. Receives prompts, returns scores with reasoning." },
                   { term: "Runner", desc: "Executes Cases with Metrics. Handles parallelism, subtests, and result aggregation." },
                 ].map((item) => (
-                  <div key={item.term} className="p-4 border border-[var(--border)] rounded-md bg-[var(--surface)]">
+                  <div
+                    key={item.term}
+                    onClick={() => setSelectedConcept(item.term)}
+                    className="p-4 border border-[var(--border)] rounded-md bg-[var(--surface)] cursor-pointer hover:border-[var(--accent)] transition-colors"
+                  >
                     <dt className="font-mono font-semibold text-[var(--accent)]">{item.term}</dt>
                     <dd className="mt-1 text-sm text-[var(--secondary)]">{item.desc}</dd>
                   </div>
@@ -340,6 +403,26 @@ benchstat old.txt new.txt`}</code>
       >
         {selectedMetric && metricDetails[selectedMetric] && (
           <MetricDetailPanel metric={metricDetails[selectedMetric]} />
+        )}
+      </SlideOver>
+
+      <SlideOver
+        isOpen={selectedBenchMetric !== null}
+        onClose={() => setSelectedBenchMetric(null)}
+        title={selectedBenchMetric || ""}
+      >
+        {selectedBenchMetric && benchmarkMetricDetails[selectedBenchMetric] && (
+          <BenchmarkMetricPanel metric={benchmarkMetricDetails[selectedBenchMetric]} />
+        )}
+      </SlideOver>
+
+      <SlideOver
+        isOpen={selectedConcept !== null}
+        onClose={() => setSelectedConcept(null)}
+        title={selectedConcept || ""}
+      >
+        {selectedConcept && conceptDetails[selectedConcept] && (
+          <ConceptPanel concept={conceptDetails[selectedConcept]} />
         )}
       </SlideOver>
     </div>
