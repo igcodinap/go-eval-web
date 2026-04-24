@@ -1,0 +1,21 @@
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.3.4",
+  "base_commit_sha": "f9bfa0adc95b7d675d2f800459e0db25f80daf8e",
+  "prompts": {
+    "ccb8f2e623fef860": {
+      "agent_id": {
+        "tool": "opencode",
+        "id": "ses_23eb0442effegDMhFK9P12d6u5",
+        "model": "opencode-go/minimax-m2.7"
+      },
+      "human_author": "igcodinap",
+      "messages": [],
+      "total_additions": 8051,
+      "total_deletions": 30,
+      "accepted_lines": 8051,
+      "overriden_lines": 0
+    }
+  }
+}
