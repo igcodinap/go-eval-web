@@ -1,315 +1,245 @@
+import Image from "next/image";
+import Link from "next/link";
 import { ThemeToggle } from "@/components/theme-toggle";
 
 function GitHubIcon({ className }: { className?: string }) {
   return (
-    <svg
-      viewBox="0 0 24 24"
-      aria-hidden="true"
-      className={className}
-      fill="currentColor"
-    >
+    <svg viewBox="0 0 24 24" aria-hidden="true" className={className} fill="currentColor">
       <path d="M12 2a10 10 0 0 0-3.16 19.49c.5.09.68-.22.68-.48v-1.68c-2.78.61-3.37-1.18-3.37-1.18-.45-1.15-1.11-1.45-1.11-1.45-.9-.62.07-.61.07-.61 1 .07 1.53 1.03 1.53 1.03.89 1.52 2.33 1.08 2.9.83.09-.65.35-1.08.63-1.32-2.22-.25-4.55-1.11-4.55-4.95 0-1.09.39-1.98 1.03-2.68-.1-.25-.45-1.27.1-2.64 0 0 .84-.27 2.75 1.02a9.6 9.6 0 0 1 5 0c1.91-1.29 2.75-1.02 2.75-1.02.55 1.37.2 2.39.1 2.64.64.7 1.03 1.59 1.03 2.68 0 3.85-2.33 4.7-4.56 4.95.36.31.68.93.68 1.87v2.77c0 .27.18.58.69.48A10 10 0 0 0 12 2Z" />
     </svg>
   );
 }
 
-const stats = [
-  { label: "LLM Calls Reduced", value: "5x", detail: "With compound scoring" },
-  { label: "Core Dependencies", value: "0", detail: "Stdlib-first architecture" },
-  { label: "Metric Latency", value: "~0ms", detail: "Deterministic checks" },
+const navItems = [
+  { label: "Overview", href: "#overview" },
+  { label: "Install", href: "#install" },
+  { label: "Quick Start", href: "#quickstart" },
+  { label: "Metrics", href: "#metrics" },
+  { label: "Benchmarks", href: "#benchmarks" },
+  { label: "CI/CD", href: "#cicd" },
 ];
 
-const features = [
-  {
-    title: "Compound Rubrics",
-    description:
-      "Score language match, helpfulness, compliance, and style in one judge call with structured results.",
-  },
-  {
-    title: "Deterministic Metrics",
-    description:
-      "Use Contains, Regex, JSONPath, and FieldCount to catch broken responses before spending tokens.",
-  },
-  {
-    title: "Vendor-Agnostic Core",
-    description:
-      "Keep your evaluation logic portable while plugging in judge adapters per provider.",
-  },
-  {
-    title: "Precheck Pipeline",
-    description:
-      "Gate expensive LLM-based metrics behind fast deterministic assertions to keep runs lean.",
-  },
-];
-
-const valueProps = [
-  {
-    title: "Cost Control By Design",
-    summary:
-      "Run deterministic prechecks first and reserve judge calls for the cases that truly need them.",
-    proof: "Lower evaluation spend without lowering quality bars.",
-  },
-  {
-    title: "CI-Ready Quality Gates",
-    summary:
-      "Evals run through familiar Go test workflows, so teams adopt them without adding a new platform.",
-    proof: "Fits existing pipelines, release checks, and team habits.",
-  },
-  {
-    title: "Portable Evaluation Layer",
-    summary:
-      "Keep metric logic vendor-agnostic and switch judge providers without rewriting your core suite.",
-    proof: "Avoid lock-in while model strategy evolves.",
-  },
-  {
-    title: "Open-Source Trust",
-    summary:
-      "Scoring behavior is transparent and inspectable, which makes quality discussions concrete and auditable.",
-    proof: "No black-box evaluator surprises in production.",
-  },
-];
-
-const steps = [
-  {
-    step: "01",
-    title: "Define Cases",
-    detail: "Describe prompts, expected behavior, and context for critical flows.",
-  },
-  {
-    step: "02",
-    title: "Compose Metrics",
-    detail: "Mix deterministic checks and compound rubric scoring for full coverage.",
-  },
-  {
-    step: "03",
-    title: "Run & Improve",
-    detail: "Track pass/fail, inspect reasons, and tighten prompts or retrieval strategy.",
-  },
+const metrics = [
+  { name: "Faithfulness", type: "judge", measures: "Output claims supported by Context", threshold: "0.8" },
+  { name: "Hallucination", type: "judge", measures: "Output does not invent facts outside Context", threshold: "0.9" },
+  { name: "AnswerRelevancy", type: "judge", measures: "Output addresses Input", threshold: "0.7" },
+  { name: "ContextPrecision", type: "judge", measures: "Retrieved docs are relevant to Input", threshold: "0.7" },
+  { name: "GEval", type: "judge", measures: "Custom rubric with Criteria and Steps", threshold: "0.7" },
+  { name: "Compound", type: "judge", measures: "Multiple rubric dimensions in one call", threshold: "per-dimension" },
+  { name: "Contains", type: "deterministic", measures: "Output contains expected substring", threshold: "binary" },
+  { name: "Regex", type: "deterministic", measures: "Output matches a regex pattern", threshold: "binary" },
+  { name: "JSONPath", type: "deterministic", measures: "JSON output value at path equals expected", threshold: "binary" },
+  { name: "FieldCount", type: "deterministic", measures: "Minimum non-null top-level JSON fields", threshold: "config" },
 ];
 
 export default function Home() {
   return (
-    <div className="relative isolate flex-1 overflow-hidden">
-      <div className="pointer-events-none absolute inset-0 -z-10 bg-[radial-gradient(circle_at_15%_20%,var(--hero-glow-1),transparent_40%),radial-gradient(circle_at_80%_10%,var(--hero-glow-2),transparent_42%),linear-gradient(180deg,var(--background),color-mix(in_oklab,var(--background),black_5%))]" />
-      <div className="pointer-events-none absolute inset-0 -z-10 opacity-40 [background:linear-gradient(to_right,var(--grid)_1px,transparent_1px),linear-gradient(to_bottom,var(--grid)_1px,transparent_1px)] [background-size:40px_40px]" />
-
-      <header className="mx-auto flex w-full max-w-6xl items-center justify-between px-6 py-6 md:px-10">
-        <div className="flex items-center gap-3">
-          <div className="inline-flex h-9 w-9 items-center justify-center rounded-xl bg-[var(--accent)]/20 font-mono text-sm font-bold text-[var(--accent)]">
-            ge
+    <div className="min-h-screen">
+      <header className="sticky top-0 z-50 border-b border-[var(--border)] bg-[var(--header-bg)]">
+        <div className="mx-auto flex h-14 max-w-7xl items-center justify-between px-4 md:px-8">
+          <div className="flex items-center gap-6">
+            <Link href="/" className="flex items-center gap-2">
+              <Image src="/logo.png" alt="go-eval logo" width={28} height={28} className="rounded" />
+              <span className="go-logo text-lg font-bold">go-eval</span>
+              <span className="text-xs text-[var(--muted)]">v0.2</span>
+            </Link>
+            <nav className="hidden md:flex items-center gap-1 text-sm">
+              {navItems.map((item) => (
+                <a
+                  key={item.label}
+                  href={item.href}
+                  className="px-3 py-2 text-[var(--secondary)] hover:text-[var(--foreground)] hover:no-underline"
+                >
+                  {item.label}
+                </a>
+              ))}
+            </nav>
           </div>
-          <div>
-            <p className="text-sm font-semibold tracking-[0.15em] text-[var(--muted)]">
-              GO-EVAL
-            </p>
-            <p className="text-xs text-[var(--muted)]">LLM evaluation toolkit</p>
-          </div>
-        </div>
-        <div className="flex items-center gap-3">
-          <a
-            href="https://github.com/igcodinap/go-eval"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="hidden items-center gap-2 rounded-full border border-[var(--border)] bg-[var(--surface)] px-4 py-2 text-sm font-medium text-[var(--foreground)] transition hover:border-[var(--accent)] md:inline-flex"
-          >
-            <GitHubIcon className="h-4 w-4" />
-            GitHub
-          </a>
-          <ThemeToggle />
-        </div>
-      </header>
-
-      <main className="mx-auto flex w-full max-w-6xl flex-col gap-20 px-6 pb-20 md:px-10">
-        <section className="surface-card animate-fade-up rounded-3xl px-7 py-10 md:px-12 md:py-14">
-          <p className="mb-4 inline-flex rounded-full border border-[var(--border)] bg-[var(--surface-strong)] px-4 py-1 text-xs font-semibold tracking-[0.16em] text-[var(--muted)]">
-            OPEN SOURCE • TEST WHAT SHIPS
-          </p>
-          <h1 className="max-w-3xl text-4xl font-semibold tracking-tight text-[var(--foreground)] md:text-6xl">
-            Evaluate AI outputs with
-            <span className="block bg-[linear-gradient(120deg,var(--accent),color-mix(in_oklab,var(--accent),white_35%))] bg-clip-text text-transparent">
-              speed, structure, and confidence.
-            </span>
-          </h1>
-          <p className="mt-6 max-w-2xl text-lg leading-8 text-[var(--muted)]">
-            go-eval helps teams gate quality before release with deterministic
-            checks, strict compound rubric scoring, and provider adapters built
-            for real production loops.
-          </p>
-          <div className="mt-8 flex flex-wrap gap-3">
+          <div className="flex items-center gap-3">
             <a
               href="https://github.com/igcodinap/go-eval"
               target="_blank"
               rel="noopener noreferrer"
-              className="inline-flex items-center gap-2 rounded-full bg-[var(--accent)] px-6 py-3 text-sm font-semibold text-[var(--accent-foreground)] transition hover:opacity-90"
+              className="flex items-center gap-2 text-sm text-[var(--secondary)] hover:text-[var(--foreground)]"
             >
-              <GitHubIcon className="h-4 w-4" />
-              Explore Repository
+              <GitHubIcon className="h-5 w-5" />
+              <span className="hidden sm:inline">GitHub</span>
             </a>
-            <a
-              href="/docs/getting-started"
-              className="inline-flex items-center rounded-full border border-[var(--border)] bg-[var(--surface-strong)] px-6 py-3 text-sm font-semibold text-[var(--foreground)] transition hover:border-[var(--accent)]"
-            >
-              Read Documentation
-            </a>
+            <ThemeToggle />
           </div>
-          <div className="mt-10 grid gap-4 md:grid-cols-3">
-            {stats.map((item) => (
-              <article
-                key={item.label}
-                className="rounded-2xl border border-[var(--border)] bg-[var(--surface-strong)] px-5 py-5"
-              >
-                <p className="text-xs font-semibold uppercase tracking-[0.1em] text-[var(--muted)]">
-                  {item.label}
-                </p>
-                <p className="mt-2 text-3xl font-semibold tracking-tight text-[var(--foreground)]">
-                  {item.value}
-                </p>
-                <p className="mt-1 text-sm text-[var(--muted)]">{item.detail}</p>
-              </article>
-            ))}
-          </div>
-        </section>
+        </div>
+      </header>
 
-        <section className="animate-fade-up" style={{ animationDelay: "120ms" }}>
-          <h2 className="text-3xl font-semibold tracking-tight text-[var(--foreground)] md:text-4xl">
-            Built for evaluation workflows that move fast.
-          </h2>
-          <div className="mt-8 grid gap-4 md:grid-cols-2">
-            {features.map((feature) => (
-              <article
-                key={feature.title}
-                className="surface-card rounded-2xl px-6 py-6"
-              >
-                <h3 className="text-xl font-semibold text-[var(--foreground)]">
-                  {feature.title}
-                </h3>
-                <p className="mt-3 leading-7 text-[var(--muted)]">
-                  {feature.description}
-                </p>
-              </article>
-            ))}
-          </div>
-        </section>
+      <div className="mx-auto max-w-7xl px-4 md:px-8">
+        <div className="flex gap-8 py-8">
+          <aside className="hidden w-48 shrink-0 lg:block">
+            <nav className="sticky top-20 text-sm">
+              <p className="mb-2 text-xs font-semibold uppercase tracking-wider text-[var(--muted)]">Contents</p>
+              <ul className="space-y-1">
+                {navItems.map((item) => (
+                  <li key={item.label}>
+                    <a href={item.href} className="block py-1 text-[var(--secondary)] hover:text-[var(--foreground)]">
+                      {item.label}
+                    </a>
+                  </li>
+                ))}
+              </ul>
+            </nav>
+          </aside>
 
-        <section
-          className="animate-fade-up"
-          style={{ animationDelay: "180ms" }}
-        >
-          <article className="surface-card rounded-2xl p-6 md:p-8">
-            <p className="text-xs font-semibold uppercase tracking-[0.11em] text-[var(--muted)]">
-              Why Teams Choose It
-            </p>
-            <h2 className="mt-3 text-2xl font-semibold tracking-tight text-[var(--foreground)] md:text-3xl">
-              Practical framework benefits you can sell today.
-            </h2>
-            <div className="mt-6 grid gap-4">
-              {valueProps.map((item) => (
-                <div
-                  key={item.title}
-                  className="rounded-xl border border-[var(--border)] bg-[var(--surface-strong)] px-4 py-4"
-                >
-                  <h3 className="text-lg font-semibold text-[var(--foreground)]">
-                    {item.title}
-                  </h3>
-                  <p className="mt-2 text-sm leading-6 text-[var(--muted)]">
-                    {item.summary}
-                  </p>
-                  <p className="mt-2 font-mono text-xs text-[var(--accent)]">
-                    {item.proof}
-                  </p>
-                </div>
-              ))}
-            </div>
-          </article>
-        </section>
+          <main className="min-w-0 flex-1 max-w-3xl">
+            <section id="overview" className="mb-12 scroll-mt-20">
+              <h1 className="mb-4 text-4xl font-bold">go-eval</h1>
+              <p className="text-xl text-[var(--secondary)]">LLM evaluation for Go — go test native.</p>
+            </section>
 
-        <section
-          className="grid gap-6 animate-fade-up md:grid-cols-[1.1fr_0.9fr]"
-          style={{ animationDelay: "220ms" }}
-        >
-          <article className="surface-card rounded-2xl p-6">
-            <p className="text-xs font-semibold uppercase tracking-[0.11em] text-[var(--muted)]">
-              Quick Start
-            </p>
-            <pre className="mt-4 overflow-x-auto rounded-xl bg-[var(--code-bg)] p-5 font-mono text-sm text-[var(--code-fg)]">
-              <code>{`package evaltest
+            <section id="install" className="mb-12 scroll-mt-20">
+              <h2 className="mb-4 text-2xl font-semibold border-b border-[var(--border)] pb-2">Install</h2>
+              <pre className="bg-[var(--code-bg)] border border-[var(--border)] rounded-md px-4 py-3 font-mono text-sm">
+                <code>go get github.com/igcodinap/go-eval</code>
+              </pre>
+            </section>
+
+            <section id="quickstart" className="mb-12 scroll-mt-20">
+              <h2 className="mb-4 text-2xl font-semibold border-b border-[var(--border)] pb-2">Quick Start</h2>
+              <p className="mb-4 text-[var(--secondary)]">
+                Write evaluation cases using standard Go tests. Import the package, define a Judge, create Cases, and run Metrics.
+              </p>
+              <pre className="bg-[var(--code-bg)] border border-[var(--border)] rounded-md px-4 py-3 font-mono text-sm overflow-x-auto">
+                <code>{`package evaltest
 
 import (
-  "testing"
+	"testing"
 
-  eval "github.com/igcodinap/go-eval"
+	eval "github.com/igcodinap/go-eval"
 )
 
-func TestPolicyResponse(t *testing.T) {
-  runner := eval.NewRunner(openAIJudge)
+func TestRAGAnswer(t *testing.T) {
+	judge := newMyJudge(t)
+	r := eval.NewRunner(judge)
 
-  result := runner.Run(t, eval.Precheck{
-    Pre: eval.Contains{},
-    Main: eval.Compound{
-      Dimensions: []eval.Dimension{
-        {Name: "helpfulness", Rubric: "Actionable and specific", Threshold: 0.75},
-        {Name: "policy_alignment", Rubric: "No unsafe instructions", Threshold: 0.90},
-      },
-    },
-  }, eval.Case{
-    Input: "...",
-    Output: "...",
-    Expected: "refund policy",
-  })
+	c := eval.Case{
+		Input:   "What's the capital of France?",
+		Output:  myRAG.Answer("What's the capital of France?"),
+		Context: []string{"Paris is the capital of France..."},
+	}
 
-  if !result.Passed {
-    t.Fatalf("quality regression: %s", result.Reason)
-  }
+	r.Run(t, eval.Faithfulness{Threshold: 0.8}, c)
+	r.Run(t, eval.Hallucination{Threshold: 0.9}, c)
 }`}</code>
-            </pre>
-          </article>
-          <article className="surface-card rounded-2xl p-6">
-            <p className="text-xs font-semibold uppercase tracking-[0.11em] text-[var(--muted)]">
-              Workflow
-            </p>
-            <div className="mt-4 space-y-4">
-              {steps.map((step) => (
-                <div
-                  key={step.step}
-                  className="rounded-xl border border-[var(--border)] bg-[var(--surface-strong)] px-4 py-4"
-                >
-                  <p className="font-mono text-xs font-bold tracking-[0.1em] text-[var(--accent)]">
-                    {step.step}
-                  </p>
-                  <h3 className="mt-1 text-lg font-semibold text-[var(--foreground)]">
-                    {step.title}
-                  </h3>
-                  <p className="mt-2 text-sm leading-6 text-[var(--muted)]">
-                    {step.detail}
-                  </p>
-                </div>
-              ))}
+              </pre>
+              <p className="mt-4 text-sm text-[var(--muted)]">
+                Run with: <code className="bg-[var(--code-bg)] px-1.5 py-0.5 rounded text-[var(--accent)]">GOEVAL=1 go test ./...</code>
+              </p>
+              <div className="mt-4 rounded-md bg-[var(--surface)] p-4 text-sm border border-[var(--border)]">
+                <p className="font-semibold text-[var(--foreground)]">CI-safe by default</p>
+                <p className="mt-1 text-[var(--secondary)]">
+                  Without <code className="bg-[var(--code-bg)] px-1 py-0.5 rounded text-[var(--accent)]">GOEVAL=1</code>, all evaluations skip silently. This keeps local development and CI pipelines safe until you explicitly enable them.
+                </p>
+              </div>
+            </section>
+
+            <section id="metrics" className="mb-12 scroll-mt-20">
+              <h2 className="mb-4 text-2xl font-semibold border-b border-[var(--border)] pb-2">Metrics</h2>
+              <p className="mb-4 text-[var(--secondary)]">
+                Two categories: <span className="metric-tag judge">LLM-as-Judge</span> for semantic evaluation, <span className="metric-tag deterministic">Deterministic</span> for fast prechecks.
+              </p>
+              <div className="overflow-x-auto">
+                <table className="w-full text-sm border-collapse">
+                  <thead>
+                    <tr className="border-b border-[var(--table-border)]">
+                      <th className="py-2 text-left font-semibold text-[var(--foreground)]">Metric</th>
+                      <th className="py-2 text-left font-semibold text-[var(--foreground)]">Measures</th>
+                      <th className="py-2 text-left font-semibold text-[var(--foreground)]">Default Threshold</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {metrics.map((metric, i) => (
+                      <tr key={metric.name} className={`border-b border-[var(--table-border)] ${i % 2 === 0 ? 'bg-[var(--table-stripe)]' : ''}`}>
+                        <td className="py-2.5 font-mono text-[var(--accent)]">{metric.name}</td>
+                        <td className="py-2.5 text-[var(--secondary)]">{metric.measures}</td>
+                        <td className="py-2.5 font-mono text-[var(--muted)]">{metric.threshold}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </section>
+
+            <section id="benchmarks" className="mb-12 scroll-mt-20">
+              <h2 className="mb-4 text-2xl font-semibold border-b border-[var(--border)] pb-2">Benchmarks</h2>
+              <p className="mb-4 text-[var(--secondary)]">
+                Compare evaluation runs across prompt or model changes using <code className="bg-[var(--code-bg)] px-1.5 py-0.5 rounded text-[var(--accent)]">go test -bench</code> and <code className="bg-[var(--code-bg)] px-1.5 py-0.5 rounded text-[var(--accent)]">benchstat</code>.
+              </p>
+              <pre className="bg-[var(--code-bg)] border border-[var(--border)] rounded-md px-4 py-3 font-mono text-sm overflow-x-auto">
+                <code>{`func BenchmarkRAGLatency(b *testing.B) {
+	r := eval.NewRunner(newMyJudge(b))
+	c := eval.Case{Input: "...", Output: "...", Context: docs}
+
+	eval.Bench(b, r, eval.Faithfulness{Threshold: 0.8}, c)
+}`}</code>
+              </pre>
+            </section>
+
+            <section id="cicd" className="mb-12 scroll-mt-20">
+              <h2 className="mb-4 text-2xl font-semibold border-b border-[var(--border)] pb-2">CI/CD</h2>
+              <p className="mb-4 text-[var(--secondary)]">
+                Integrate into any CI pipeline with a single environment variable. Evals run inside standard <code className="bg-[var(--code-bg)] px-1.5 py-0.5 rounded text-[var(--accent)]">go test</code>, so existing Go CI infrastructure works out of the box.
+              </p>
+              <pre className="bg-[var(--code-bg)] border border-[var(--border)] rounded-md px-4 py-3 font-mono text-sm overflow-x-auto">
+                <code>{`# Run evaluations
+GOEVAL=1 go test ./...
+
+# Run benchmarks for comparison
+GOEVAL=1 go test -bench=. -count=5 > old.txt
+GOEVAL=1 go test -bench=. -count=5 > new.txt
+benchstat old.txt new.txt`}</code>
+              </pre>
+            </section>
+
+            <section id="concepts" className="mb-12 scroll-mt-20">
+              <h2 className="mb-4 text-2xl font-semibold border-b border-[var(--border)] pb-2">Core Concepts</h2>
+              <div className="grid gap-4 md:grid-cols-2">
+                {[
+                  { term: "Case", desc: "Input, expected output, context, and optional metadata for a single evaluation scenario." },
+                  { term: "Metric", desc: "A scoring function (Faithfulness, Contains, etc.) with a threshold and optional configuration." },
+                  { term: "Judge", desc: "Your implementation of LLM-as-judge. Receives prompts, returns scores with reasoning." },
+                  { term: "Runner", desc: "Executes Cases with Metrics. Handles parallelism, subtests, and result aggregation." },
+                ].map((item) => (
+                  <div key={item.term} className="p-4 border border-[var(--border)] rounded-md bg-[var(--surface)]">
+                    <dt className="font-mono font-semibold text-[var(--accent)]">{item.term}</dt>
+                    <dd className="mt-1 text-sm text-[var(--secondary)]">{item.desc}</dd>
+                  </div>
+                ))}
+              </div>
+            </section>
+          </main>
+
+          <aside className="hidden w-48 shrink-0 xl:block">
+            <div className="sticky top-20 text-sm">
+              <p className="mb-2 text-xs font-semibold uppercase tracking-wider text-[var(--muted)]">On This Page</p>
+              <ul className="space-y-1 text-[var(--secondary)]">
+                <li><a href="#overview" className="block py-1">Overview</a></li>
+                <li><a href="#install" className="block py-1">Install</a></li>
+                <li><a href="#quickstart" className="block py-1">Quick Start</a></li>
+                <li><a href="#metrics" className="block py-1">Metrics</a></li>
+                <li><a href="#benchmarks" className="block py-1">Benchmarks</a></li>
+                <li><a href="#cicd" className="block py-1">CI/CD</a></li>
+              </ul>
             </div>
-          </article>
-        </section>
+          </aside>
+        </div>
+      </div>
 
-        <section
-          className="surface-card animate-fade-up rounded-3xl px-7 py-10 text-center md:px-12"
-          style={{ animationDelay: "300ms" }}
-        >
-          <p className="text-xs font-semibold uppercase tracking-[0.11em] text-[var(--muted)]">
-            Ready To Evaluate Better
+      <footer className="border-t border-[var(--border)] bg-[var(--surface)]">
+        <div className="mx-auto max-w-7xl px-4 py-6 md:px-8">
+          <p className="text-sm text-[var(--muted)]">
+            go-eval v0.2 — MIT License —{" "}
+            <a href="https://github.com/igcodinap/go-eval" className="text-[var(--accent)]">
+              github.com/igcodinap/go-eval
+            </a>
           </p>
-          <h2 className="mx-auto mt-3 max-w-3xl text-3xl font-semibold tracking-tight text-[var(--foreground)] md:text-4xl">
-            Launch quality gates that scale with your LLM product.
-          </h2>
-          <p className="mx-auto mt-4 max-w-2xl text-[var(--muted)]">
-            Start with deterministic assertions, layer compound scoring, and
-            keep shipping with confidence.
-          </p>
-        </section>
-      </main>
-
-      <footer className="mx-auto mt-auto w-full max-w-6xl px-6 pb-8 text-sm text-[var(--muted)] md:px-10">
-        <p>
-          Built for go-eval. Open-source and focused on practical LLM quality
-          engineering.
-        </p>
+        </div>
       </footer>
     </div>
   );

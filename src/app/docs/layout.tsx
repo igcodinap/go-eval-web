@@ -1,5 +1,5 @@
+import Image from "next/image";
 import Link from "next/link";
-import { AskAICard } from "@/components/ask-ai-card";
 import { ThemeToggle } from "@/components/theme-toggle";
 
 const navGroups = [
@@ -34,44 +34,53 @@ export default function DocsLayout({
   children: React.ReactNode;
 }) {
   return (
-    <div className="pb-16">
-      <header className="mx-auto mt-4 flex w-full max-w-7xl items-center justify-between px-4 md:mt-6 md:px-8">
-        <Link
-          href="/"
-          className="inline-flex items-center gap-2 rounded-full border border-[var(--border)] bg-[var(--surface)] px-3 py-2 text-sm font-medium text-[var(--foreground)] transition hover:border-[var(--accent)]"
-        >
-          <span className="inline-flex h-6 w-6 items-center justify-center rounded-md bg-[var(--accent)]/15 font-mono text-[10px] font-bold text-[var(--accent)]">
-            ge
-          </span>
-          go-eval Docs
-        </Link>
-        <ThemeToggle />
+    <div className="min-h-screen">
+      <header className="sticky top-0 z-50 border-b border-[var(--border)] bg-[var(--header-bg)]">
+        <div className="mx-auto flex h-14 max-w-7xl items-center justify-between px-4 md:px-8">
+          <div className="flex items-center gap-6">
+            <Link href="/" className="flex items-center gap-2">
+              <Image src="/logo.png" alt="go-eval logo" width={28} height={28} className="rounded" />
+              <span className="go-logo text-lg font-bold">go-eval</span>
+              <span className="text-xs text-[var(--muted)]">Docs</span>
+            </Link>
+            <nav className="hidden md:flex items-center gap-1 text-sm">
+              <Link href="/" className="px-3 py-2 text-[var(--secondary)] hover:text-[var(--foreground)]">
+                Home
+              </Link>
+              <Link href="/docs/getting-started" className="px-3 py-2 text-[var(--foreground)] font-medium">
+                Docs
+              </Link>
+            </nav>
+          </div>
+          <div className="flex items-center gap-3">
+            <a
+              href="https://github.com/igcodinap/go-eval"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-sm text-[var(--secondary)] hover:text-[var(--foreground)]"
+            >
+              GitHub
+            </a>
+            <ThemeToggle />
+          </div>
+        </div>
       </header>
 
-      <div className="mx-auto flex w-full max-w-7xl gap-6 px-4 pt-6 md:px-8 md:pt-8">
-        <aside className="hidden w-72 shrink-0 lg:block">
-          <div className="surface-card sticky top-6 rounded-2xl p-5">
-            <div className="mb-5 flex items-center gap-2">
-              <div className="inline-flex h-7 w-7 items-center justify-center rounded-lg bg-[var(--accent)]/15 font-mono text-xs font-bold text-[var(--accent)]">
-                ge
-              </div>
-              <p className="text-sm font-semibold text-[var(--foreground)]">
-                go-eval Docs
-              </p>
-            </div>
-
-            <nav className="space-y-5">
+      <div className="mx-auto max-w-7xl px-4 md:px-8">
+        <div className="flex gap-8 py-8">
+          <aside className="hidden w-48 shrink-0 lg:block">
+            <nav className="sticky top-20 text-sm">
               {navGroups.map((group) => (
-                <div key={group.title}>
-                  <p className="mb-2 text-xs font-semibold uppercase tracking-[0.12em] text-[var(--muted)]">
+                <div key={group.title} className="mb-6">
+                  <p className="mb-2 text-xs font-semibold uppercase tracking-wider text-[var(--muted)]">
                     {group.title}
                   </p>
-                  <ul className="space-y-1.5">
+                  <ul className="space-y-1">
                     {group.items.map((item) => (
                       <li key={item.href}>
                         <Link
                           href={item.href}
-                          className="block rounded-lg px-2 py-1.5 text-sm text-[var(--foreground)] transition hover:bg-[var(--surface-strong)]"
+                          className="block py-1 text-[var(--secondary)] hover:text-[var(--foreground)]"
                         >
                           {item.label}
                         </Link>
@@ -81,21 +90,24 @@ export default function DocsLayout({
                 </div>
               ))}
             </nav>
-          </div>
-        </aside>
+          </aside>
 
-        <main className="min-w-0 flex-1">{children}</main>
-
-        <div className="hidden w-72 shrink-0 xl:block">
-          <div className="sticky top-6">
-            <AskAICard
-              pageTitle="go-eval Quick Introduction"
-              pageSummary="Setup, first test run, metrics overview, CI usage, and practical evaluation workflow for Go teams."
-              pageUrlPath="/docs/getting-started"
-            />
-          </div>
+          <main className="min-w-0 flex-1 max-w-3xl">
+            {children}
+          </main>
         </div>
       </div>
+
+      <footer className="border-t border-[var(--border)] bg-[var(--surface)]">
+        <div className="mx-auto max-w-7xl px-4 py-6 md:px-8">
+          <p className="text-sm text-[var(--muted)]">
+            go-eval v0.2 — MIT License —{" "}
+            <a href="https://github.com/igcodinap/go-eval" className="text-[var(--accent)]">
+              github.com/igcodinap/go-eval
+            </a>
+          </p>
+        </div>
+      </footer>
     </div>
   );
 }

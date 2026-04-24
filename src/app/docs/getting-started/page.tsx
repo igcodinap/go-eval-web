@@ -7,262 +7,223 @@ const useCases = [
   "Agent workflows with precheck gating before expensive scoring",
 ];
 
-const principles = [
-  "Keep evals inside your existing Go testing workflow.",
-  "Use deterministic metrics first; call LLM judges only when necessary.",
-  "Treat metric output as an engineering signal, not just a dashboard number.",
-  "Keep adapters optional so core eval logic stays vendor-agnostic.",
+const concepts = [
+  { term: "Case", desc: "Input, output, context, and optional metadata for a single eval scenario." },
+  { term: "Metric", desc: "Scoring function (Contains, Faithfulness, etc.) with threshold and config." },
+  { term: "Judge", desc: "Your LLM-as-judge implementation. Returns scores with reasoning." },
+  { term: "Runner", desc: "Executes Cases with Metrics. Handles parallelism, subtests, and result aggregation." },
 ];
 
 const docsSections = [
   { id: "use-cases", title: "Use Cases" },
   { id: "concepts", title: "Concepts" },
-  { id: "first-run", title: "Create Your First Test Run" },
-  { id: "e2e-evals", title: "End-to-End Evals" },
+  { id: "first-run", title: "First Test Run" },
   { id: "metrics-overview", title: "Metrics Overview" },
-  { id: "deterministic", title: "Deterministic Metrics" },
-  { id: "compound", title: "Compound Metrics" },
-  { id: "ci-cd", title: "Unit Testing in CI/CD" },
+  { id: "deterministic", title: "Deterministic" },
+  { id: "compound", title: "Compound" },
+  { id: "ci-cd", title: "CI/CD" },
   { id: "troubleshooting", title: "Troubleshooting" },
+];
+
+const metrics = [
+  { name: "Contains", type: "Deterministic", desc: "Output contains expected substring" },
+  { name: "Regex", type: "Deterministic", desc: "Output matches a regex pattern" },
+  { name: "JSONPath", type: "Deterministic", desc: "JSON value at path equals expected" },
+  { name: "FieldCount", type: "Deterministic", desc: "Minimum non-null top-level fields" },
+  { name: "Faithfulness", type: "LLM-as-judge", desc: "Output claims supported by Context" },
+  { name: "Hallucination", type: "LLM-as-judge", desc: "No facts invented outside Context" },
+  { name: "AnswerRelevancy", type: "LLM-as-judge", desc: "Output addresses Input" },
+  { name: "ContextPrecision", type: "LLM-as-judge", desc: "Retrieved docs are relevant to Input" },
+  { name: "GEval", type: "LLM-as-judge", desc: "Custom rubric with Criteria and Steps" },
+  { name: "Compound", type: "LLM-as-judge", desc: "Multiple rubric dimensions in one call" },
 ];
 
 export default function GettingStartedPage() {
   return (
-    <article className="surface-card rounded-3xl p-6 md:p-10">
-      <div className="mb-6 flex flex-wrap items-center gap-2 text-sm text-[var(--muted)]">
-        <Link href="/" className="transition hover:text-[var(--foreground)]">
-          Home
-        </Link>
-        <span>/</span>
+    <article>
+      <div className="mb-6 text-sm text-[var(--muted)]">
+        <Link href="/" className="hover:text-[var(--foreground)]">Home</Link>
+        <span className="mx-2">/</span>
+        <span className="text-[var(--foreground)]">Docs</span>
+        <span className="mx-2">/</span>
         <span className="text-[var(--foreground)]">Getting Started</span>
       </div>
 
-      <p className="text-xs font-semibold uppercase tracking-[0.14em] text-[var(--muted)]">
-        Getting Started
-      </p>
-      <h1 className="mt-2 text-4xl font-semibold tracking-tight text-[var(--foreground)] md:text-5xl">
-        Quick Introduction
-      </h1>
-      <p className="mt-5 max-w-3xl text-base leading-8 text-[var(--muted)] md:text-lg">
-        go-eval is an open-source evaluation toolkit for Go teams building LLM
-        products. It is designed to feel native to `go test`, so you can ship
-        evals as part of normal engineering workflows instead of a separate
-        platform.
+      <h1 className="mb-4 text-4xl font-bold">Getting Started</h1>
+      <p className="text-lg text-[var(--secondary)] leading-relaxed">
+        go-eval is an open-source evaluation toolkit for Go teams building LLM products. It is designed to feel native to <code>go test</code>, so you can ship evals as part of normal engineering workflows instead of a separate platform.
       </p>
 
-      <div className="mt-8 rounded-2xl border border-[var(--border)] bg-[var(--surface-strong)] p-5">
-        <p className="text-sm font-semibold text-[var(--foreground)]">On this page</p>
-        <div className="mt-3 flex flex-wrap gap-2">
-          {docsSections.map((section) => (
-            <a
-              key={section.id}
-              href={`#${section.id}`}
-              className="rounded-full border border-[var(--border)] px-3 py-1.5 text-xs font-medium text-[var(--foreground)] transition hover:border-[var(--accent)]"
-            >
-              {section.title}
-            </a>
-          ))}
-        </div>
-      </div>
+      <nav className="mt-6 flex flex-wrap gap-2 text-sm">
+        {docsSections.map((section) => (
+          <a
+            key={section.id}
+            href={`#${section.id}`}
+            className="text-[var(--accent)] hover:underline"
+          >
+            {section.title}
+          </a>
+        ))}
+      </nav>
 
-      <section id="use-cases" className="mt-12 scroll-mt-24">
-        <h2 className="text-2xl font-semibold text-[var(--foreground)] md:text-3xl">
-          Use Cases
-        </h2>
-        <ul className="mt-4 space-y-2 text-[var(--muted)]">
+      <section id="use-cases" className="mt-12 scroll-mt-20">
+        <h2 className="mb-4 text-2xl font-semibold border-b border-[var(--border)] pb-2">Use Cases</h2>
+        <ul className="mt-4 space-y-2">
           {useCases.map((useCase) => (
-            <li key={useCase} className="rounded-xl border border-[var(--border)] bg-[var(--surface-strong)] px-4 py-3">
+            <li key={useCase} className="flex items-center gap-3 py-2 text-[var(--secondary)]">
+              <span className="h-1.5 w-1.5 rounded-full bg-[var(--accent)]" />
               {useCase}
             </li>
           ))}
         </ul>
       </section>
 
-      <section id="concepts" className="mt-12 scroll-mt-24">
-        <h2 className="text-2xl font-semibold text-[var(--foreground)] md:text-3xl">
-          Core Concepts
-        </h2>
-        <p className="mt-4 leading-7 text-[var(--muted)]">
-          In go-eval, a <code>Case</code> represents an input/output interaction,
-          a <code>Metric</code> acts as the scoring rule, a <code>Judge</code>
-          provides model-based scoring when needed, and a <code>Runner</code>
-          executes everything inside your tests.
-        </p>
-        <ul className="mt-4 space-y-2 text-[var(--muted)]">
-          {principles.map((principle) => (
-            <li key={principle} className="rounded-xl border border-[var(--border)] bg-[var(--surface-strong)] px-4 py-3">
-              {principle}
-            </li>
+      <section id="concepts" className="mt-12 scroll-mt-20">
+        <h2 className="mb-4 text-2xl font-semibold border-b border-[var(--border)] pb-2">Core Concepts</h2>
+        <div className="mt-4 grid gap-4 md:grid-cols-2">
+          {concepts.map((item) => (
+            <div key={item.term} className="p-4 border border-[var(--border)] rounded-md bg-[var(--surface)]">
+              <dt className="font-mono font-semibold text-[var(--accent)]">{item.term}</dt>
+              <dd className="mt-1 text-sm text-[var(--secondary)]">{item.desc}</dd>
+            </div>
           ))}
-        </ul>
+        </div>
       </section>
 
-      <section id="first-run" className="mt-12 scroll-mt-24">
-        <h2 className="text-2xl font-semibold text-[var(--foreground)] md:text-3xl">
-          Create Your First Test Run
-        </h2>
-        <p className="mt-4 leading-7 text-[var(--muted)]">
-          Start with a deterministic precheck and a rubric-based judge metric.
-          This keeps eval costs low while catching obvious failures early.
+      <section id="first-run" className="mt-12 scroll-mt-20">
+        <h2 className="mb-4 text-2xl font-semibold border-b border-[var(--border)] pb-2">Create Your First Test Run</h2>
+        <p className="text-[var(--secondary)]">
+          Start with a deterministic precheck and a compound rubric metric. This keeps eval costs low while catching obvious failures early.
         </p>
-        <pre className="mt-5 overflow-x-auto rounded-2xl bg-[var(--code-bg)] p-5 font-mono text-sm text-[var(--code-fg)]">
+        <pre className="mt-4 bg-[var(--code-bg)] border border-[var(--border)] rounded-md px-4 py-3 font-mono text-sm overflow-x-auto">
           <code>{`package yourpkg_test
 
 import (
-  "testing"
+	"testing"
 
-  eval "github.com/igcodinap/go-eval"
+	eval "github.com/igcodinap/go-eval"
 )
 
 func TestSupportReply(t *testing.T) {
-  runner := eval.NewRunner(openAIJudge)
+	runner := eval.NewRunner(openAIJudge)
 
-  c := eval.Case{
-    Input:    "How do I cancel my plan?",
-    Output:   "You can cancel from Billing > Subscription.",
-    Expected: "cancel",
-  }
+	c := eval.Case{
+		Input:   "How do I cancel my plan?",
+		Output:  "You can cancel from Billing > Subscription.",
+		Expected: "cancel",
+	}
 
-  result := runner.Run(t, eval.Precheck{
-    Pre: eval.Contains{},
-    Main: eval.Compound{
-      Dimensions: []eval.Dimension{
-        {Name: "helpfulness", Rubric: "Actionable next step", Threshold: 0.7},
-        {Name: "policy_alignment", Rubric: "No unsafe guidance", Threshold: 0.9},
-      },
-    },
-  }, c)
+	result := runner.Run(t, eval.Precheck{
+		Pre:  eval.Contains{},
+		Main: eval.Compound{
+			Dimensions: []eval.Dimension{
+				{Name: "helpfulness", Rubric: "Actionable next step", Threshold: 0.7},
+				{Name: "policy_alignment", Rubric: "No unsafe guidance", Threshold: 0.9},
+			},
+		},
+	}, c)
 
-  if !result.Passed {
-    t.Fatalf("eval failed: %s", result.Reason)
-  }
+	if !result.Passed {
+		t.Fatalf("eval failed: %s", result.Reason)
+	}
 }`}</code>
         </pre>
       </section>
 
-      <section id="e2e-evals" className="mt-12 scroll-mt-24">
-        <h2 className="text-2xl font-semibold text-[var(--foreground)] md:text-3xl">
-          End-to-End Evals
-        </h2>
-        <p className="mt-4 leading-7 text-[var(--muted)]">
-          Use your real app output in tests and evaluate complete behavior.
-          This is the fastest way to catch quality regressions before release.
-        </p>
-      </section>
-
-      <section id="metrics-overview" className="mt-12 scroll-mt-24">
-        <h2 className="text-2xl font-semibold text-[var(--foreground)] md:text-3xl">
-          Metrics Overview
-        </h2>
-        <div className="mt-4 overflow-hidden rounded-2xl border border-[var(--border)]">
-          <table className="w-full text-left text-sm">
-            <thead className="bg-[var(--surface-strong)] text-[var(--foreground)]">
-              <tr>
-                <th className="px-4 py-3">Metric</th>
-                <th className="px-4 py-3">Type</th>
-                <th className="px-4 py-3">Best for</th>
+      <section id="metrics-overview" className="mt-12 scroll-mt-20">
+        <h2 className="mb-4 text-2xl font-semibold border-b border-[var(--border)] pb-2">Metrics Overview</h2>
+        <div className="mt-4 overflow-x-auto">
+          <table className="w-full text-sm border-collapse">
+            <thead>
+              <tr className="border-b border-[var(--table-border)]">
+                <th className="py-2 text-left font-semibold text-[var(--foreground)]">Metric</th>
+                <th className="py-2 text-left font-semibold text-[var(--foreground)]">Type</th>
+                <th className="py-2 text-left font-semibold text-[var(--foreground)]">Description</th>
               </tr>
             </thead>
-            <tbody className="text-[var(--muted)]">
-              <tr className="border-t border-[var(--border)]">
-                <td className="px-4 py-3">Contains</td>
-                <td className="px-4 py-3">Deterministic</td>
-                <td className="px-4 py-3">Keyword/substring gates</td>
-              </tr>
-              <tr className="border-t border-[var(--border)]">
-                <td className="px-4 py-3">Regex</td>
-                <td className="px-4 py-3">Deterministic</td>
-                <td className="px-4 py-3">Format compliance</td>
-              </tr>
-              <tr className="border-t border-[var(--border)]">
-                <td className="px-4 py-3">JSONPath</td>
-                <td className="px-4 py-3">Deterministic</td>
-                <td className="px-4 py-3">Field-level extraction validation</td>
-              </tr>
-              <tr className="border-t border-[var(--border)]">
-                <td className="px-4 py-3">FieldCount</td>
-                <td className="px-4 py-3">Deterministic</td>
-                <td className="px-4 py-3">Output completeness checks</td>
-              </tr>
-              <tr className="border-t border-[var(--border)]">
-                <td className="px-4 py-3">Compound</td>
-                <td className="px-4 py-3">LLM-as-judge</td>
-                <td className="px-4 py-3">Multi-criteria rubric scoring</td>
-              </tr>
+            <tbody>
+              {metrics.map((m, i) => (
+                <tr key={m.name} className={`border-b border-[var(--table-border)] ${i % 2 === 0 ? 'bg-[var(--table-stripe)]' : ''}`}>
+                  <td className="py-2.5 font-mono text-[var(--accent)]">{m.name}</td>
+                  <td className="py-2.5">
+                    <span className={`metric-tag ${m.type === 'Deterministic' ? 'deterministic' : 'judge'}`}>
+                      {m.type}
+                    </span>
+                  </td>
+                  <td className="py-2.5 text-[var(--secondary)]">{m.desc}</td>
+                </tr>
+              ))}
             </tbody>
           </table>
         </div>
       </section>
 
-      <section id="deterministic" className="mt-12 scroll-mt-24">
-        <h2 className="text-2xl font-semibold text-[var(--foreground)] md:text-3xl">
-          Deterministic Metrics
-        </h2>
-        <p className="mt-4 leading-7 text-[var(--muted)]">
-          Deterministic metrics do not call an LLM judge. They are fast, cheap,
-          reproducible, and ideal for prechecks and extraction validation.
+      <section id="deterministic" className="mt-12 scroll-mt-20">
+        <h2 className="mb-4 text-2xl font-semibold border-b border-[var(--border)] pb-2">Deterministic Metrics</h2>
+        <p className="text-[var(--secondary)]">
+          Deterministic metrics do not call an LLM judge. They are fast, cheap, and reproducible—ideal for prechecks and extraction validation.
         </p>
+        <div className="mt-4 grid gap-3 md:grid-cols-2">
+          {["Contains", "Regex", "JSONPath", "FieldCount"].map((name) => (
+            <div key={name} className="p-3 border border-[var(--border)] rounded-md bg-[var(--surface)]">
+              <span className="font-mono text-[var(--accent)]">{name}</span>
+              <p className="mt-1 text-xs text-[var(--muted)]">Binary pass/fail based on exact criteria</p>
+            </div>
+          ))}
+        </div>
       </section>
 
-      <section id="compound" className="mt-12 scroll-mt-24">
-        <h2 className="text-2xl font-semibold text-[var(--foreground)] md:text-3xl">
-          Compound Metrics
-        </h2>
-        <p className="mt-4 leading-7 text-[var(--muted)]">
-          Compound scoring evaluates multiple rubric dimensions in one judge
-          call, reducing latency and token cost while preserving a structured
-          per-dimension breakdown.
+      <section id="compound" className="mt-12 scroll-mt-20">
+        <h2 className="mb-4 text-2xl font-semibold border-b border-[var(--border)] pb-2">Compound Metrics</h2>
+        <p className="text-[var(--secondary)]">
+          Compound scoring evaluates multiple rubric dimensions in one judge call, reducing latency and token cost while preserving structured per-dimension results.
         </p>
+        <div className="mt-4 rounded-md bg-[var(--surface)] p-4 border border-[var(--border)] text-sm">
+          <p className="font-semibold text-[var(--foreground)]">Example: Multi-dimension rubric</p>
+          <pre className="mt-2 bg-[var(--code-bg)] p-3 rounded font-mono text-xs overflow-x-auto">
+            <code>{`eval.Compound{
+  Dimensions: []eval.Dimension{
+    {Name: "helpfulness", Rubric: "...", Threshold: 0.7},
+    {Name: "safety", Rubric: "...", Threshold: 0.9},
+    {Name: "accuracy", Rubric: "...", Threshold: 0.8},
+  },
+}`}</code>
+          </pre>
+        </div>
       </section>
 
-      <section id="ci-cd" className="mt-12 scroll-mt-24">
-        <h2 className="text-2xl font-semibold text-[var(--foreground)] md:text-3xl">
-          Unit Testing in CI/CD
-        </h2>
-        <p className="mt-4 leading-7 text-[var(--muted)]">
-          Keep evals explicitly enabled in CI using environment flags:
+      <section id="ci-cd" className="mt-12 scroll-mt-20">
+        <h2 className="mb-4 text-2xl font-semibold border-b border-[var(--border)] pb-2">CI/CD</h2>
+        <p className="text-[var(--secondary)]">
+          Enable evaluations explicitly with the <code className="bg-[var(--code-bg)] px-1.5 py-0.5 rounded text-[var(--accent)]">GOEVAL=1</code> environment variable. Without it, all evals skip silently—keeping local development and CI safe by default.
         </p>
-        <pre className="mt-4 overflow-x-auto rounded-2xl bg-[var(--code-bg)] p-5 font-mono text-sm text-[var(--code-fg)]">
-          <code>{`# Local or CI
+        <pre className="mt-4 bg-[var(--code-bg)] border border-[var(--border)] rounded-md px-4 py-3 font-mono text-sm">
+          <code>{`# Enable evals
 GOEVAL=1 go test ./...
 
-# Optional: write result artifacts when configured
-GOEVAL_RESULTS_DIR=./eval-results GOEVAL=1 go test ./...`}</code>
+# With result logging
+GOEVAL_RESULTS_DIR=./results GOEVAL=1 go test ./...
+
+# Benchmark comparison
+GOEVAL=1 go test -bench=. -count=5 > old.txt
+GOEVAL=1 go test -bench=. -count=5 > new.txt
+benchstat old.txt new.txt`}</code>
         </pre>
       </section>
 
-      <section id="troubleshooting" className="mt-12 scroll-mt-24">
-        <h2 className="text-2xl font-semibold text-[var(--foreground)] md:text-3xl">
-          Troubleshooting
-        </h2>
-        <div className="mt-4 space-y-3">
-          <details className="rounded-xl border border-[var(--border)] bg-[var(--surface-strong)] px-4 py-3 text-[var(--foreground)]">
-            <summary className="cursor-pointer font-medium">
-              Evals are skipped unexpectedly
-            </summary>
-            <p className="mt-2 text-sm leading-6 text-[var(--muted)]">
-              Confirm <code>GOEVAL=1</code> is set in your environment before
-              running tests.
-            </p>
-          </details>
-          <details className="rounded-xl border border-[var(--border)] bg-[var(--surface-strong)] px-4 py-3 text-[var(--foreground)]">
-            <summary className="cursor-pointer font-medium">
-              Judge calls fail intermittently
-            </summary>
-            <p className="mt-2 text-sm leading-6 text-[var(--muted)]">
-              Verify provider credentials, rate limits, and model availability.
-              Use deterministic prechecks to reduce judge call volume.
-            </p>
-          </details>
-          <details className="rounded-xl border border-[var(--border)] bg-[var(--surface-strong)] px-4 py-3 text-[var(--foreground)]">
-            <summary className="cursor-pointer font-medium">
-              Want full API details?
-            </summary>
-            <p className="mt-2 text-sm leading-6 text-[var(--muted)]">
-              Use package docs and inline Go doc comments for detailed type and
-              method reference.
-            </p>
-          </details>
+      <section id="troubleshooting" className="mt-12 scroll-mt-20">
+        <h2 className="mb-4 text-2xl font-semibold border-b border-[var(--border)] pb-2">Troubleshooting</h2>
+        <div className="mt-4 space-y-2">
+          {[
+            { q: "Evals are skipped unexpectedly", a: "Confirm GOEVAL=1 is set in your environment before running tests." },
+            { q: "Judge calls fail intermittently", a: "Verify provider credentials, rate limits, and model availability. Use deterministic prechecks to reduce judge call volume." },
+            { q: "Getting detailed API reference", a: "Use package docs: go doc github.com/igcodinap/go-eval" },
+          ].map((item) => (
+            <details key={item.q} className="group p-4 border border-[var(--border)] rounded-md bg-[var(--surface)]">
+              <summary className="cursor-pointer font-medium text-[var(--foreground)]">{item.q}</summary>
+              <p className="mt-2 text-sm text-[var(--secondary)]">{item.a}</p>
+            </details>
+          ))}
         </div>
       </section>
     </article>
