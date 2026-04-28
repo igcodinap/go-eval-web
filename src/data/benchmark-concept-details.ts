@@ -97,6 +97,71 @@ export const conceptDetails: Record<string, ConceptDetail> = {
 }`,
     },
   },
+  CaseMetadata: {
+    term: "Case Metadata",
+    description: "Standard keys for categorizing and filtering evaluation cases.",
+    details: `Case metadata is user-defined but follow these conventions for consistency:
+
+| Key | Type | Purpose |
+|-----|------|---------|
+| \`flow\` | string | Logical agent flow exercised (e.g. \`rag.retrieval\`, \`tool_use.search\`) |
+| \`tier\` | string | Case selection tier: \`critical\`, \`standard\`, or \`extended\` |
+| \`dataset\` | string | Dataset name and version/provenance |
+
+Metadata is copied into JSONL results by \`Runner\`. Use \`WithCaseFilter\` to run only certain tiers.`,
+    example: {
+      code: `c := eval.Case{
+	Input:   "What's the capital of France?",
+	Output:  myRAG.Answer("What's the capital of France?"),
+	Context: []string{"Paris is the capital of France."},
+	Metadata: map[string]any{
+		"flow":   "rag.retrieval",
+		"tier":   "critical",
+		"dataset": "french-geo-v1",
+	},
+}`,
+    },
+  },
+  JudgeMock: {
+    term: "JudgeMock",
+    description: "Scripted judge implementation for testing without an LLM.",
+    details: `Use \`JudgeMock\` to test evaluation logic without calling a real LLM. It returns predefined scores and reasons, enabling deterministic test runs.
+
+Perfect for:
+- Unit testing eval suites
+- CI pipelines without API costs
+- Developing metric configurations`,
+    example: {
+      code: `judge := eval.JudgeMock{
+	Score: 0.85,
+	Reason: "Mock response for testing",
+}
+
+r := eval.NewRunner(judge)
+c := eval.Case{Input: "...", Output: "..."}
+r.Run(t, eval.Faithfulness{Threshold: 0.8}, c)`,
+    },
+  },
+  Precheck: {
+    term: "Precheck",
+    description: "Conditional wrapper that skips expensive LLM metrics if a pre-check fails.",
+    details: `Precheck runs a deterministic metric first (like \`Contains\` or \`Regex\`). If the pre-check fails, the main LLM metric is skipped entirely—saving cost and latency.
+
+This pattern is ideal for:
+- Gating expensive evaluations behind fast format checks
+- Early-exit on obvious failures
+- Reducing LLM API calls in CI`,
+    example: {
+      code: `r.Run(t, eval.Precheck{
+	Pre:  eval.Contains{Substring: "cancel"},
+	Main: eval.Compound{
+		Dimensions: []eval.Dimension{
+			{Name: "helpfulness", Rubric: "...", Threshold: 0.7},
+		},
+	},
+}, c)`,
+    },
+  },
   Metric: {
     term: "Metric",
     description: "A scoring function (Faithfulness, Contains, etc.) with a threshold and optional configuration.",
@@ -166,6 +231,24 @@ func TestRAG(t *testing.T) {
 	r.Run(t, eval.Faithfulness{Threshold: 0.8}, c)
 	r.Run(t, eval.Hallucination{Threshold: 0.9}, c)
 }`,
+    },
+  },
+  ConversationMetric: {
+    term: "ConversationMetric",
+    description: "Evaluate multi-turn agent conversations with context tracking across turns.",
+    details: `ConversationMetric evaluates multi-turn conversations by tracking context across multiple exchanges. Unlike single-turn metrics that evaluate each response independently, ConversationMetric maintains conversation history to assess coherence and task completion over time.
+
+Key features:
+- Tracks context across multiple conversation turns
+- Evaluates coherence and progression
+- Measures task completion across the conversation
+- Useful for agent-style workflows with tool use and follow-up
+
+Available in v0.3 (unreleased).`,
+    example: {
+      code: `r.Run(t, eval.ConversationMetric{
+	Threshold: 0.7,
+}, cases)`,
     },
   },
 };

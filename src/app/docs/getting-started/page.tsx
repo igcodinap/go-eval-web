@@ -20,6 +20,7 @@ const docsSections = [
   { id: "first-run", title: "First Test Run" },
   { id: "metrics-overview", title: "Metrics Overview" },
   { id: "deterministic", title: "Deterministic" },
+  { id: "precheck", title: "Precheck" },
   { id: "compound", title: "Compound" },
   { id: "ci-cd", title: "CI/CD" },
   { id: "troubleshooting", title: "Troubleshooting" },
@@ -234,6 +235,27 @@ func TestSupportReply(t *testing.T) {
               <p className="mt-1 text-xs text-[var(--muted)]">Binary pass/fail based on exact criteria</p>
             </div>
           ))}
+        </div>
+      </section>
+
+      <section id="precheck" className="mt-12 scroll-mt-20">
+        <h2 className="mb-4 text-2xl font-semibold border-b border-[var(--border)] pb-2">Precheck</h2>
+        <p className="text-[var(--secondary)]">
+          Conditional wrapper that skips expensive LLM metrics if a pre-check fails. Run a fast deterministic check first; if it fails, skip the main metric entirely to save cost and latency.
+        </p>
+        <div className="mt-4 rounded-md bg-[var(--surface)] p-4 border border-[var(--border)] text-sm">
+          <p className="font-semibold text-[var(--foreground)]">Example: Gate expensive evaluation behind format check</p>
+          <pre className="mt-2 bg-[var(--code-bg)] p-3 rounded font-mono text-xs overflow-x-auto">
+            <code>{`r.Run(t, eval.Precheck{
+	Pre:  eval.Contains{Substring: "cancel"},
+	Main: eval.Compound{
+		Dimensions: []eval.Dimension{
+			{Name: "helpfulness", Rubric: "...", Threshold: 0.7},
+		},
+	},
+}, c)`}</code>
+          </pre>
+          <p className="mt-2 text-xs text-[var(--muted)]">If &quot;cancel&quot; isn&apos;t found in output, the Compound metric is skipped entirely.</p>
         </div>
       </section>
 
