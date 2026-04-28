@@ -481,7 +481,9 @@ benchstat old.txt new.txt`}</code>
                 <li><a href="#metrics" className="block py-1">Metrics</a></li>
                 <li><a href="#benchmarks" className="block py-1">Benchmarks</a></li>
                 <li><a href="#cicd" className="block py-1">CI/CD</a></li>
-                <li><a href="#cli" className="block py-1">CLI</a></li>
+                {currentVersion === "v0.3-unreleased" && (
+                  <li><a href="#cli" className="block py-1">CLI</a></li>
+                )}
                 <li><a href="#concepts" className="block py-1">Concepts</a></li>
               </ul>
             </div>
