@@ -233,4 +233,22 @@ func TestRAG(t *testing.T) {
 }`,
     },
   },
+  ConversationMetric: {
+    term: "ConversationMetric",
+    description: "Evaluate multi-turn agent conversations with context tracking across turns.",
+    details: `ConversationMetric evaluates multi-turn conversations by tracking context across multiple exchanges. Unlike single-turn metrics that evaluate each response independently, ConversationMetric maintains conversation history to assess coherence and task completion over time.
+
+Key features:
+- Tracks context across multiple conversation turns
+- Evaluates coherence and progression
+- Measures task completion across the conversation
+- Useful for agent-style workflows with tool use and follow-up
+
+Available in v0.3 (unreleased).`,
+    example: {
+      code: `r.Run(t, eval.ConversationMetric{
+	Threshold: 0.7,
+}, cases)`,
+    },
+  },
 };

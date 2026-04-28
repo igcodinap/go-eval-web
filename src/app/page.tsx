@@ -451,12 +451,13 @@ benchstat old.txt new.txt`}</code>
               <div className="grid gap-4 md:grid-cols-2">
                 {[
                   { term: "Case", desc: "Input, expected output, context, and optional metadata for a single evaluation scenario." },
-                  { term: "Case Metadata", desc: "Standard keys (flow, tier, dataset) for categorizing and filtering cases." },
+                  { term: "CaseMetadata", desc: "Standard keys (flow, tier, dataset) for categorizing and filtering cases." },
                   { term: "Metric", desc: "A scoring function (Faithfulness, Contains, etc.) with a threshold and optional configuration." },
                   { term: "Precheck", desc: "Conditional wrapper that skips expensive LLM metrics if a pre-check fails." },
                   { term: "Judge", desc: "Your implementation of LLM-as-judge. Receives prompts, returns scores with reasoning." },
                   { term: "JudgeMock", desc: "Scripted judge for testing without an LLM." },
                   { term: "Runner", desc: "Executes Cases with Metrics. Handles parallelism, subtests, and result aggregation." },
+                  ...(currentVersion === "v0.3-unreleased" ? [{ term: "ConversationMetric", desc: "Evaluate multi-turn agent conversations with context tracking across turns." }] : []),
                 ].map((item) => (
                   <div
                     key={item.term}
