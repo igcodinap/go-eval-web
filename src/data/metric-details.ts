@@ -334,4 +334,42 @@ func TestUserProfileCompleteness(t *testing.T) {
 --- PASS: TestUserProfileCompleteness (0.09ms)`,
     },
   },
+  Precheck: {
+    name: "Precheck",
+    type: "deterministic",
+    purpose: "Conditional evaluation gate - skip expensive LLM checks if pre metric fails",
+    howItWorks: "Runs a deterministic metric first (Pre); if it fails, skips the main LLM metric entirely. Ideal for gating expensive evaluations behind fast format checks.",
+    threshold: "binary",
+    example: {
+      code: `package evaltest
+
+import (
+	"testing"
+	eval "github.com/igcodinap/go-eval"
+)
+
+func TestSupportReply(t *testing.T) {
+	judge := newMyJudge(t)
+	r := eval.NewRunner(judge)
+
+	c := eval.Case{
+		Input:   "How do I cancel my plan?",
+		Output:  "You can cancel from Billing > Subscription.",
+	}
+
+	r.Run(t, eval.Precheck{
+		Pre:  eval.Contains{Substring: "cancel"},
+		Main: eval.Compound{
+			Dimensions: []eval.Dimension{
+				{Name: "helpfulness", Rubric: "Actionable next step", Threshold: 0.7},
+			},
+		},
+	}, c)
+}`,
+      output: `=== RUN   TestSupportReply
+    precheck_test.go:18: Precheck: PASS (contains "cancel")
+    precheck_test.go:18: Compound: faithfulness: 0.85 ✓
+--- PASS: TestSupportReply (82.34ms)`,
+    },
+  },
 };
