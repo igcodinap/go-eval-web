@@ -1,0 +1,25 @@
+src/data/benchmark-concept-details.ts
+  8789bbe727875197 236-253
+src/app/page.tsx
+  8789bbe727875197 454,460
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.3.4",
+  "base_commit_sha": "97b5fc37c1a0733f0273d9620f80aebd9983d53a",
+  "prompts": {
+    "8789bbe727875197": {
+      "agent_id": {
+        "tool": "opencode",
+        "id": "ses_229b3c8f1ffexJXW18Bmmm1ho8",
+        "model": "opencode-go/minimax-m2.7"
+      },
+      "human_author": "igcodinap",
+      "messages": [],
+      "total_additions": 20,
+      "total_deletions": 1,
+      "accepted_lines": 20,
+      "overriden_lines": 0
+    }
+  }
+}
