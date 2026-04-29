@@ -2,7 +2,7 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { SlideOver } from "@/components/slide-over";
 import { metricDetails, MetricDetail } from "@/data/metric-details";
@@ -12,6 +12,14 @@ function GitHubIcon({ className }: { className?: string }) {
   return (
     <svg viewBox="0 0 24 24" aria-hidden="true" className={className} fill="currentColor">
       <path d="M12 2a10 10 0 0 0-3.16 19.49c.5.09.68-.22.68-.48v-1.68c-2.78.61-3.37-1.18-3.37-1.18-.45-1.15-1.11-1.45-1.11-1.45-.9-.62.07-.61.07-.61 1 .07 1.53 1.03 1.53 1.03.89 1.52 2.33 1.08 2.9.83.09-.65.35-1.08.63-1.32-2.22-.25-4.55-1.11-4.55-4.95 0-1.09.39-1.98 1.03-2.68-.1-.25-.45-1.27.1-2.64 0 0 .84-.27 2.75 1.02a9.6 9.6 0 0 1 5 0c1.91-1.29 2.75-1.02 2.75-1.02.55 1.37.2 2.39.1 2.64.64.7 1.03 1.59 1.03 2.68 0 3.85-2.33 4.7-4.56 4.95.36.31.68.93.68 1.87v2.77c0 .27.18.58.69.48A10 10 0 0 0 12 2Z" />
+    </svg>
+  );
+}
+
+function CopyLinkIcon({ className }: { className?: string }) {
+  return (
+    <svg viewBox="0 0 20 20" aria-hidden="true" className={className} fill="currentColor">
+      <path d="M12.232 4.232a2.5 2.5 0 0 1 3.536 3.536l-1.225 1.224a.75.75 0 0 1-1.061-1.06l1.224-1.224a4.5 4.5 0 0 0-6.373-6.373L7.757 2.27a4.5 4.5 0 0 0 6.373 6.373l-1.898 1.898a.75.75 0 0 1-1.061-1.061l1.898-1.898ZM3.98 8.722a3.5 3.5 0 0 1 4.95-4.95l-1.898-1.898a.75.75 0 0 0-1.061 1.06l1.898 1.899a2.5 2.5 0 0 1-3.536 3.536l2.27-2.27a4.5 4.5 0 0 0-6.373-6.373L1.768 5.01a3.5 3.5 0 0 1 4.95-4.95l2.27 2.27a.75.75 0 0 1-1.06 1.06l-2.27-2.27Z" />
     </svg>
   );
 }
@@ -146,6 +154,19 @@ export default function Home() {
   const [selectedBenchMetric, setSelectedBenchMetric] = useState<string | null>(null);
   const [selectedConcept, setSelectedConcept] = useState<string | null>(null);
   const [currentVersion, setCurrentVersion] = useState("v0.2");
+  const [copied, setCopied] = useState(false);
+
+  const handleCopyLink = () => {
+    navigator.clipboard.writeText(window.location.href);
+    setCopied(true);
+  };
+
+  useEffect(() => {
+    if (copied) {
+      const timer = setTimeout(() => setCopied(false), 2000);
+      return () => clearTimeout(timer);
+    }
+  }, [copied]);
 
   const metrics = currentVersion === "v0.3-unreleased" ? metricsV03 : metricsV02;
 
@@ -189,6 +210,15 @@ export default function Home() {
               <GitHubIcon className="h-5 w-5" />
               <span className="hidden sm:inline">GitHub</span>
             </a>
+            <button
+              onClick={handleCopyLink}
+              title="Copy page URL"
+              className="flex items-center gap-1.5 text-xs px-2.5 py-1.5 rounded-md border border-[var(--border)] bg-[var(--surface)] text-[var(--secondary)] hover:text-[var(--foreground)] hover:border-[var(--accent)] transition-all"
+            >
+              <CopyLinkIcon className="h-4 w-4" />
+              <span className="hidden sm:inline">{copied ? "Copied!" : "Copy link"}</span>
+              {copied && <span className="sm:hidden">✓</span>}
+            </button>
             <ThemeToggle />
           </div>
         </div>
@@ -472,23 +502,7 @@ benchstat old.txt new.txt`}</code>
             </section>
           </main>
 
-          <aside className="hidden w-48 shrink-0 xl:block">
-            <div className="sticky top-20 text-sm">
-              <p className="mb-2 text-xs font-semibold uppercase tracking-wider text-[var(--muted)]">On This Page</p>
-              <ul className="space-y-1 text-[var(--secondary)]">
-                <li><a href="#overview" className="block py-1">Overview</a></li>
-                <li><a href="#install" className="block py-1">Install</a></li>
-                <li><a href="#quickstart" className="block py-1">Quick Start</a></li>
-                <li><a href="#metrics" className="block py-1">Metrics</a></li>
-                <li><a href="#benchmarks" className="block py-1">Benchmarks</a></li>
-                <li><a href="#cicd" className="block py-1">CI/CD</a></li>
-                {currentVersion === "v0.3-unreleased" && (
-                  <li><a href="#cli" className="block py-1">CLI</a></li>
-                )}
-                <li><a href="#concepts" className="block py-1">Concepts</a></li>
-              </ul>
-            </div>
-          </aside>
+
         </div>
       </div>
 
