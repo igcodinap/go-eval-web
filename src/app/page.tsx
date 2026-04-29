@@ -147,7 +147,7 @@ export default function Home() {
   const [selectedMetric, setSelectedMetric] = useState<string | null>(null);
   const [selectedBenchMetric, setSelectedBenchMetric] = useState<string | null>(null);
   const [selectedConcept, setSelectedConcept] = useState<string | null>(null);
-  const [currentVersion, setCurrentVersion] = useState("v0.2");
+  const [currentVersion, setCurrentVersion] = useState("v0.3");
   
 
   const metrics = currentVersion === "v0.3" ? metricsV03 : metricsV02;
