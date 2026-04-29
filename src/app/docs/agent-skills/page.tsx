@@ -4,7 +4,7 @@ import Link from "next/link";
 import { useState } from "react";
 
 export default function AgentSkillsPage() {
-  const [currentVersion, setCurrentVersion] = useState("v0.2");
+  const [currentVersion, setCurrentVersion] = useState("v0.3");
 
   return (
     <article>
@@ -22,11 +22,11 @@ export default function AgentSkillsPage() {
           className="text-xs bg-[var(--surface)] border border-[var(--border)] rounded px-1.5 py-0.5 text-[var(--muted)] cursor-pointer"
         >
           <option value="v0.2">v0.2</option>
-          <option value="v0.3-unreleased">v0.3 (unreleased)</option>
+          <option value="v0.3">v0.3</option>
         </select>
       </div>
 
-      {currentVersion === "v0.3-unreleased" ? (
+      {currentVersion === "v0.3" ? (
         <div className="space-y-8">
           <p className="text-lg text-[var(--secondary)] leading-relaxed">
             Guides for coding agents that need to author, run, or review go-eval suites.

@@ -29,8 +29,8 @@ const navItems = [
 ];
 
 const versions = [
-  { label: "v0.2 (current)", value: "v0.2", badge: "stable" },
-  { label: "v0.3 (unreleased)", value: "v0.3-unreleased", badge: "unreleased" },
+  { label: "v0.3 (current)", value: "v0.3", badge: "stable" },
+  { label: "v0.2", value: "v0.2", badge: "legacy" },
 ];
 
 const metricsV02: Array<{name: string; type: string; purpose: string; howItWorks: string; threshold: string; badge?: string}> = [
@@ -150,7 +150,7 @@ export default function Home() {
   const [currentVersion, setCurrentVersion] = useState("v0.2");
   
 
-  const metrics = currentVersion === "v0.3-unreleased" ? metricsV03 : metricsV02;
+  const metrics = currentVersion === "v0.3" ? metricsV03 : metricsV02;
 
   return (
     <div className="min-h-screen">
@@ -378,13 +378,15 @@ benchstat old.txt new.txt`}</code>
                 </p>
                 <pre className="bg-[var(--code-bg)] border border-[var(--border)] rounded-md px-4 py-3 font-mono text-xs overflow-x-auto">
                   <code>{`{
-  "timestamp": "2026-04-22T10:30:00Z",
+  "timestamp": "2026-04-29T10:30:00Z",
   "test_name": "TestRAGAnswer/Faithfulness",
   "metric": "Faithfulness",
   "score": 0.95,
   "passed": true,
   "reason": "19/20 claims supported by context",
   "tokens": 1250,
+  "prompt_tokens": 820,
+  "completion_tokens": 430,
   "latency_ns": 9452000,
   "metadata": {"flow": "rag.retrieval", "tier": "critical"}
 }`}</code>
@@ -416,7 +418,7 @@ benchstat old.txt new.txt`}</code>
               </div>
             </section>
 
-            {currentVersion === "v0.3-unreleased" && (
+            {currentVersion === "v0.2" ? null : (
               <section id="cli" className="mb-12 scroll-mt-20">
                 <h2 className="mb-4 text-2xl font-semibold border-b border-[var(--border)] pb-2">CLI</h2>
                 <p className="mb-4 text-[var(--secondary)]">
@@ -460,7 +462,7 @@ benchstat old.txt new.txt`}</code>
                   { term: "Judge", desc: "Your implementation of LLM-as-judge. Receives prompts, returns scores with reasoning." },
                   { term: "JudgeMock", desc: "Scripted judge for testing without an LLM." },
                   { term: "Runner", desc: "Executes Cases with Metrics. Handles parallelism, subtests, and result aggregation." },
-                  ...(currentVersion === "v0.3-unreleased" ? [{ term: "ConversationMetric", desc: "Evaluate multi-turn agent conversations with context tracking across turns." }] : []),
+                  ...(currentVersion === "v0.3" ? [{ term: "ConversationMetric", desc: "Evaluate multi-turn agent conversations with context tracking across turns." }] : []),
                 ].map((item) => (
                   <div
                     key={item.term}
@@ -482,7 +484,7 @@ benchstat old.txt new.txt`}</code>
       <footer className="border-t border-[var(--border)] bg-[var(--surface)]">
         <div className="mx-auto max-w-7xl px-4 py-6 md:px-8">
           <p className="text-sm text-[var(--muted)]">
-            go-eval v0.2 — MIT License —{" "}
+            go-eval v0.3 — MIT License —{" "}
             <a href="https://github.com/igcodinap/go-eval" className="text-[var(--accent)]">github.com/igcodinap/go-eval</a>
           </p>
         </div>
