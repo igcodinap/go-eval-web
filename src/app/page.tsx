@@ -2,7 +2,7 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { SlideOver } from "@/components/slide-over";
 import { metricDetails, MetricDetail } from "@/data/metric-details";
@@ -16,13 +16,7 @@ function GitHubIcon({ className }: { className?: string }) {
   );
 }
 
-function CopyLinkIcon({ className }: { className?: string }) {
-  return (
-    <svg viewBox="0 0 20 20" aria-hidden="true" className={className} fill="currentColor">
-      <path d="M12.232 4.232a2.5 2.5 0 0 1 3.536 3.536l-1.225 1.224a.75.75 0 0 1-1.061-1.06l1.224-1.224a4.5 4.5 0 0 0-6.373-6.373L7.757 2.27a4.5 4.5 0 0 0 6.373 6.373l-1.898 1.898a.75.75 0 0 1-1.061-1.061l1.898-1.898ZM3.98 8.722a3.5 3.5 0 0 1 4.95-4.95l-1.898-1.898a.75.75 0 0 0-1.061 1.06l1.898 1.899a2.5 2.5 0 0 1-3.536 3.536l2.27-2.27a4.5 4.5 0 0 0-6.373-6.373L1.768 5.01a3.5 3.5 0 0 1 4.95-4.95l2.27 2.27a.75.75 0 0 1-1.06 1.06l-2.27-2.27Z" />
-    </svg>
-  );
-}
+
 
 const navItems = [
   { label: "Overview", href: "#overview" },
@@ -154,19 +148,7 @@ export default function Home() {
   const [selectedBenchMetric, setSelectedBenchMetric] = useState<string | null>(null);
   const [selectedConcept, setSelectedConcept] = useState<string | null>(null);
   const [currentVersion, setCurrentVersion] = useState("v0.2");
-  const [copied, setCopied] = useState(false);
-
-  const handleCopyLink = () => {
-    navigator.clipboard.writeText(window.location.href);
-    setCopied(true);
-  };
-
-  useEffect(() => {
-    if (copied) {
-      const timer = setTimeout(() => setCopied(false), 2000);
-      return () => clearTimeout(timer);
-    }
-  }, [copied]);
+  
 
   const metrics = currentVersion === "v0.3-unreleased" ? metricsV03 : metricsV02;
 
@@ -210,15 +192,6 @@ export default function Home() {
               <GitHubIcon className="h-5 w-5" />
               <span className="hidden sm:inline">GitHub</span>
             </a>
-            <button
-              onClick={handleCopyLink}
-              title="Copy page URL"
-              className="flex items-center gap-1.5 text-xs px-2.5 py-1.5 rounded-md border border-[var(--border)] bg-[var(--surface)] text-[var(--secondary)] hover:text-[var(--foreground)] hover:border-[var(--accent)] transition-all"
-            >
-              <CopyLinkIcon className="h-4 w-4" />
-              <span className="hidden sm:inline">{copied ? "Copied!" : "Copy link"}</span>
-              {copied && <span className="sm:hidden">✓</span>}
-            </button>
             <ThemeToggle />
           </div>
         </div>
