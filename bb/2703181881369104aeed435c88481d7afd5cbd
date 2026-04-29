@@ -1,0 +1,27 @@
+src/app/page.tsx
+  8789bbe727875197 32-33,153,381,388-389,421,465,487
+src/app/docs/changelog/page.tsx
+  8789bbe727875197 5-7,9-19,40,91
+src/app/docs/agent-skills/page.tsx
+  8789bbe727875197 7,25,29
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.3.4",
+  "base_commit_sha": "bb2703181881369104aeed435c88481d7afd5cbd",
+  "prompts": {
+    "8789bbe727875197": {
+      "agent_id": {
+        "tool": "opencode",
+        "id": "ses_229b3c8f1ffexJXW18Bmmm1ho8",
+        "model": "opencode-go/minimax-m2.7"
+      },
+      "human_author": "igcodinap",
+      "messages": [],
+      "total_additions": 29,
+      "total_deletions": 35,
+      "accepted_lines": 127,
+      "overriden_lines": 0
+    }
+  }
+}
