@@ -129,6 +129,16 @@ h1, h2, h3, h4, h5, h6 {
   color: var(--accent);
 }
 
+.metric-tag.trajectory {
+  border-color: #8250df;
+  color: #8250df;
+}
+
+.metric-tag.wrapper {
+  border-color: #bf8700;
+  color: #9a6700;
+}
+
 @keyframes slide-in {
   from {
     transform: translateX(100%);

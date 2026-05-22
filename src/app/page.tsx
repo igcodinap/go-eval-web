@@ -5,7 +5,7 @@ import Link from "next/link";
 import { useState } from "react";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { SlideOver } from "@/components/slide-over";
-import { metricDetails, MetricDetail } from "@/data/metric-details";
+import { metricDetails, orderedMetricDetails, MetricDetail } from "@/data/metric-details";
 import { benchmarkMetricDetails, conceptDetails, BenchmarkMetricDetail, ConceptDetail } from "@/data/benchmark-concept-details";
 
 function GitHubIcon({ className }: { className?: string }) {
@@ -16,47 +16,33 @@ function GitHubIcon({ className }: { className?: string }) {
   );
 }
 
-
-
 const navItems = [
   { label: "Overview", href: "#overview" },
   { label: "Install", href: "#install" },
   { label: "Quick Start", href: "#quickstart" },
   { label: "Metrics", href: "#metrics" },
+  { label: "Artifacts", href: "#artifacts" },
+  { label: "Trajectory", href: "#trajectory" },
   { label: "Benchmarks", href: "#benchmarks" },
   { label: "CI/CD", href: "#cicd" },
+  { label: "CLI", href: "#cli" },
   { label: "Concepts", href: "#concepts" },
 ];
 
-const versions = [
-  { label: "v0.3 (current)", value: "v0.3", badge: "stable" },
-  { label: "v0.2", value: "v0.2", badge: "legacy" },
-];
+const metricTypeLabels: Record<MetricDetail["type"], string> = {
+  judge: "LLM-as-Judge",
+  deterministic: "Deterministic",
+  trajectory: "Trajectory",
+  wrapper: "Wrapper",
+};
 
-const metricsV02: Array<{name: string; type: string; purpose: string; howItWorks: string; threshold: string; badge?: string}> = [
-  { name: "Faithfulness", type: "judge", purpose: "Verify RAG outputs don't contradict the retrieved context", howItWorks: "Judge checks each output claim against the Context, scoring the fraction that's supported", threshold: "0.8" },
-  { name: "Hallucination", type: "judge", purpose: "Catch outputs that invent facts not present in Context", howItWorks: "Judge identifies claims that don't appear in Context; score = non-invented / total", threshold: "0.9" },
-  { name: "AnswerRelevancy", type: "judge", purpose: "Ensure outputs actually address the user's question", howItWorks: "Judge evaluates whether Output directly answers Input, penalizing tangentially related responses", threshold: "0.7" },
-  { name: "ContextPrecision", type: "judge", purpose: "Check if retrieved documents actually help answer the Input", howItWorks: "Judge scores each retrieved doc on relevance to Input, reports mean precision", threshold: "0.7" },
-  { name: "GEval", type: "judge", purpose: "Score custom criteria the built-in metrics don't cover", howItWorks: "You define Criteria (rubric description) and optional Steps; judge applies your rubric", threshold: "0.7" },
-  { name: "Compound", type: "judge", purpose: "Evaluate multiple quality dimensions in one judge call (reduces cost)", howItWorks: "Multiple Dimensions with individual Rubrics evaluated together, returns per-dimension scores", threshold: "per-dimension" },
-  { name: "Precheck", type: "deterministic", purpose: "Conditional evaluation gate - skip expensive LLM checks if pre metric fails", howItWorks: "Runs a deterministic metric first; if it fails, skips the main LLM metric entirely", threshold: "binary" },
-  { name: "Contains", type: "deterministic", purpose: "Fast gate for mandatory text or keywords before expensive LLM checks", howItWorks: "Simple substring search; pass if exact string found, fail otherwise", threshold: "binary" },
-  { name: "Regex", type: "deterministic", purpose: "Validate output format compliance (emails, IDs, codes, etc.)", howItWorks: "Pattern match using regex; pass if matches, fail if doesn't match", threshold: "binary" },
-  { name: "JSONPath", type: "deterministic", purpose: "Assert specific values in structured JSON outputs (API responses, extracted data)", howItWorks: "Extract value at your JSONPath, compare to expected value", threshold: "binary" },
-  { name: "FieldCount", type: "deterministic", purpose: "Enforce minimum field count in JSON outputs (completeness check)", howItWorks: "Count non-null top-level keys; pass if >= configured minimum", threshold: "config" },
-];
-
-const metricsV03 = [
-  ...metricsV02,
-  { name: "ConversationMetric", type: "judge", purpose: "Evaluate multi-turn agent conversations", howItWorks: "Tracks context across multiple turns, evaluates coherence and task completion", threshold: "0.7", badge: "v0.3" },
-];
+const metrics = orderedMetricDetails;
 
 function MetricDetailPanel({ metric }: { metric: MetricDetail }) {
   return (
     <div className="space-y-6">
       <div className="flex items-center gap-3">
-        <span className={`metric-tag ${metric.type}`}>{metric.type}</span>
+        <span className={`metric-tag ${metric.type}`}>{metricTypeLabels[metric.type]}</span>
         <span className="font-mono text-sm text-[var(--muted)]">threshold: {metric.threshold}</span>
       </div>
 
@@ -81,7 +67,7 @@ function MetricDetailPanel({ metric }: { metric: MetricDetail }) {
           </div>
           <div>
             <p className="text-xs text-[var(--muted)] mb-2">Output</p>
-            <pre className="bg-[var(--code-bg)] border border-[var(--border)] rounded-md px-4 py-3 font-mono text-sm text-[var(--secondary)]">
+            <pre className="bg-[var(--code-bg)] border border-[var(--border)] rounded-md px-4 py-3 font-mono text-sm text-[var(--secondary)] overflow-x-auto">
               <code>{metric.example.output}</code>
             </pre>
           </div>
@@ -94,21 +80,15 @@ function MetricDetailPanel({ metric }: { metric: MetricDetail }) {
 function BenchmarkMetricPanel({ metric }: { metric: BenchmarkMetricDetail }) {
   return (
     <div className="space-y-6">
-      <div>
-        <p className="text-sm text-[var(--secondary)] mb-4">{metric.description}</p>
-      </div>
-
+      <p className="text-sm text-[var(--secondary)]">{metric.description}</p>
       <div>
         <h3 className="text-sm font-semibold text-[var(--muted)] uppercase tracking-wide mb-3">Details</h3>
-        <div className="text-sm text-[var(--foreground)] whitespace-pre-wrap">
-          {metric.details}
-        </div>
+        <div className="text-sm text-[var(--foreground)] whitespace-pre-wrap">{metric.details}</div>
       </div>
-
       {metric.example?.output && (
         <div>
           <h3 className="text-sm font-semibold text-[var(--muted)] uppercase tracking-wide mb-3">Example Output</h3>
-          <pre className="bg-[var(--code-bg)] border border-[var(--border)] rounded-md px-4 py-3 font-mono text-sm text-[var(--secondary)]">
+          <pre className="bg-[var(--code-bg)] border border-[var(--border)] rounded-md px-4 py-3 font-mono text-sm text-[var(--secondary)] overflow-x-auto">
             <code>{metric.example.output}</code>
           </pre>
         </div>
@@ -120,17 +100,11 @@ function BenchmarkMetricPanel({ metric }: { metric: BenchmarkMetricDetail }) {
 function ConceptPanel({ concept }: { concept: ConceptDetail }) {
   return (
     <div className="space-y-6">
-      <div>
-        <p className="text-sm text-[var(--secondary)] mb-4">{concept.description}</p>
-      </div>
-
+      <p className="text-sm text-[var(--secondary)]">{concept.description}</p>
       <div>
         <h3 className="text-sm font-semibold text-[var(--muted)] uppercase tracking-wide mb-3">Details</h3>
-        <div className="text-sm text-[var(--foreground)] whitespace-pre-wrap">
-          {concept.details}
-        </div>
+        <div className="text-sm text-[var(--foreground)] whitespace-pre-wrap">{concept.details}</div>
       </div>
-
       {concept.example?.code && (
         <div>
           <h3 className="text-sm font-semibold text-[var(--muted)] uppercase tracking-wide mb-3">Example</h3>
@@ -147,10 +121,6 @@ export default function Home() {
   const [selectedMetric, setSelectedMetric] = useState<string | null>(null);
   const [selectedBenchMetric, setSelectedBenchMetric] = useState<string | null>(null);
   const [selectedConcept, setSelectedConcept] = useState<string | null>(null);
-  const [currentVersion, setCurrentVersion] = useState("v0.3");
-  
-
-  const metrics = currentVersion === "v0.3" ? metricsV03 : metricsV02;
 
   return (
     <div className="min-h-screen">
@@ -160,17 +130,7 @@ export default function Home() {
             <Link href="/" className="flex items-center gap-2">
               <Image src="/logo.png" alt="go-eval logo" width={28} height={28} className="rounded" />
               <span className="go-logo text-lg font-bold">go-eval</span>
-              <select
-                value={currentVersion}
-                onChange={(e) => setCurrentVersion(e.target.value)}
-                className="text-xs bg-[var(--surface)] border border-[var(--border)] rounded px-1.5 py-0.5 text-[var(--muted)] cursor-pointer"
-              >
-                {versions.map((v) => (
-                  <option key={v.value} value={v.value}>
-                    {v.label}
-                  </option>
-                ))}
-              </select>
+              <span className="text-xs text-[var(--muted)]">v0.6</span>
             </Link>
             <nav className="hidden md:flex items-center gap-1 text-sm">
               {navItems.map((item) => (
@@ -181,9 +141,9 @@ export default function Home() {
             </nav>
           </div>
           <div className="flex items-center gap-3">
-            <a href="https://github.com/igcodinap/go-eval/releases" target="_blank" rel="noopener noreferrer" className="text-xs text-[var(--muted)] hover:text-[var(--foreground)]">
+            <Link href="/docs/changelog" className="text-xs text-[var(--muted)] hover:text-[var(--foreground)]">
               Changelog
-            </a>
+            </Link>
             <a href="https://join.slack.com/t/goeval/shared_invite/zt-3vz9qlmpw-uBiyB_oZOFsjntlbP7l0EQ" target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 text-sm text-[var(--secondary)] hover:text-[var(--foreground)]">
               <Image src="/slack.svg" alt="Slack" width={20} height={20} className="h-5 w-5" />
               <span className="hidden sm:inline">Slack</span>
@@ -217,20 +177,24 @@ export default function Home() {
           <main className="min-w-0 flex-1 max-w-3xl">
             <section id="overview" className="mb-12 scroll-mt-20">
               <h1 className="mb-4 text-4xl font-bold">go-eval</h1>
-              <p className="text-xl text-[var(--secondary)]">LLM evaluation for Go — go test native.</p>
+              <p className="text-xl text-[var(--secondary)]">LLM evaluation for Go, inside standard <code>go test</code>.</p>
+              <p className="mt-4 text-[var(--secondary)]">
+                v0.6 covers RAG-style judge metrics, deterministic JSON and artifact checks, typed tool trajectories, repeatability helpers, JSONL comparison and summaries, and optional judge adapters while keeping the core stdlib-only.
+              </p>
             </section>
 
             <section id="install" className="mb-12 scroll-mt-20">
               <h2 className="mb-4 text-2xl font-semibold border-b border-[var(--border)] pb-2">Install</h2>
-              <pre className="bg-[var(--code-bg)] border border-[var(--border)] rounded-md px-4 py-3 font-mono text-sm">
-                <code>go get github.com/igcodinap/go-eval</code>
+              <pre className="bg-[var(--code-bg)] border border-[var(--border)] rounded-md px-4 py-3 font-mono text-sm overflow-x-auto">
+                <code>{`go get github.com/igcodinap/go-eval
+go install github.com/igcodinap/go-eval/cmd/goeval@latest`}</code>
               </pre>
             </section>
 
             <section id="quickstart" className="mb-12 scroll-mt-20">
               <h2 className="mb-4 text-2xl font-semibold border-b border-[var(--border)] pb-2">Quick Start</h2>
               <p className="mb-4 text-[var(--secondary)]">
-                Write evaluation cases using standard Go tests. Import the package, define a Judge, create Cases, and run Metrics.
+                Write evaluation cases using standard Go tests. Case literals should use keyed fields, which is required by v0.4 and later.
               </p>
               <pre className="bg-[var(--code-bg)] border border-[var(--border)] rounded-md px-4 py-3 font-mono text-sm overflow-x-auto">
                 <code>{`package evaltest
@@ -243,12 +207,15 @@ import (
 
 func TestRAGAnswer(t *testing.T) {
 	judge := newMyJudge(t)
-	r := eval.NewRunner(judge)
+	r := eval.NewRunner(judge, eval.WithResultSink(eval.DefaultResultSink()))
 
 	c := eval.Case{
 		Input:   "What's the capital of France?",
 		Output:  myRAG.Answer("What's the capital of France?"),
-		Context: []string{"Paris is the capital of France..."},
+		Context: []string{"Paris is the capital of France."},
+		Metadata: map[string]any{
+			"flow": "rag.answer", "tier": "critical", "dataset": "capitals/v1",
+		},
 	}
 
 	r.Run(t, eval.Faithfulness{Threshold: 0.8}, c)
@@ -261,7 +228,7 @@ func TestRAGAnswer(t *testing.T) {
               <div className="mt-4 rounded-md bg-[var(--surface)] p-4 text-sm border border-[var(--border)]">
                 <p className="font-semibold text-[var(--foreground)]">CI-safe by default</p>
                 <p className="mt-1 text-[var(--secondary)]">
-                  Without <code className="bg-[var(--code-bg)] px-1 py-0.5 rounded text-[var(--accent)]">GOEVAL=1</code>, all evaluations skip silently. This keeps local development and CI pipelines safe until you explicitly enable them.
+                  Without <code className="bg-[var(--code-bg)] px-1 py-0.5 rounded text-[var(--accent)]">GOEVAL=1</code>, eval runs skip. Use <code className="bg-[var(--code-bg)] px-1 py-0.5 rounded text-[var(--accent)]">GOEVAL_TRACE=1</code> only when you need prompt and response logs.
                 </p>
               </div>
             </section>
@@ -269,15 +236,15 @@ func TestRAGAnswer(t *testing.T) {
             <section id="metrics" className="mb-12 scroll-mt-20">
               <h2 className="mb-4 text-2xl font-semibold border-b border-[var(--border)] pb-2">Metrics</h2>
               <p className="mb-4 text-[var(--secondary)]">
-                Two categories: <span className="metric-tag judge">LLM-as-Judge</span> for semantic evaluation, <span className="metric-tag deterministic">Deterministic</span> for fast prechecks. Click any metric for code example and output.
+                v0.6 includes <span className="metric-tag judge">LLM-as-Judge</span>, <span className="metric-tag deterministic">Deterministic</span>, <span className="metric-tag trajectory">Trajectory</span>, and <span className="metric-tag wrapper">Wrapper</span> metrics. Click any metric for a focused example.
               </p>
               <div className="overflow-x-auto">
                 <table className="w-full text-sm border-collapse">
                   <thead>
                     <tr className="border-b border-[var(--table-border)]">
                       <th className="py-2 text-left font-semibold text-[var(--foreground)]">Metric</th>
+                      <th className="py-2 text-left font-semibold text-[var(--foreground)]">Type</th>
                       <th className="py-2 text-left font-semibold text-[var(--foreground)]">Purpose</th>
-                      <th className="py-2 text-left font-semibold text-[var(--foreground)]">How It Works</th>
                       <th className="py-2 text-left font-semibold text-[var(--foreground)]">Threshold</th>
                     </tr>
                   </thead>
@@ -286,25 +253,67 @@ func TestRAGAnswer(t *testing.T) {
                       <tr
                         key={metric.name}
                         onClick={() => setSelectedMetric(metric.name)}
-                        className={`border-b border-[var(--table-border)] cursor-pointer hover:bg-[var(--hover,var(--surface))] ${i % 2 === 0 ? 'bg-[var(--table-stripe)]' : ''}`}
+                        className={`border-b border-[var(--table-border)] cursor-pointer hover:bg-[var(--hover,var(--surface))] ${i % 2 === 0 ? "bg-[var(--table-stripe)]" : ""}`}
                       >
-                        <td className="py-2.5">
-                          <span className={`font-mono ${metric.type === 'judge' ? 'text-[var(--accent)]' : 'text-[#28a745]'}`}>{metric.name}</span>
-                          {metric.badge && (
-                            <span className={`ml-2 text-xs px-1.5 py-0.5 rounded ${
-                              metric.badge === 'v0.2' ? 'bg-[var(--accent)]/10 text-[var(--accent)]' :
-                              metric.badge === 'unreleased' ? 'bg-yellow-500/10 text-yellow-600' : ''
-                            }`}>{metric.badge}</span>
-                          )}
-                        </td>
+                        <td className="py-2.5 font-mono text-[var(--accent)]">{metric.name}</td>
+                        <td className="py-2.5"><span className={`metric-tag ${metric.type}`}>{metricTypeLabels[metric.type]}</span></td>
                         <td className="py-2.5 text-[var(--secondary)]">{metric.purpose}</td>
-                        <td className="py-2.5 text-[var(--muted)] text-xs">{metric.howItWorks}</td>
                         <td className="py-2.5 font-mono text-[var(--muted)]">{metric.threshold}</td>
                       </tr>
                     ))}
                   </tbody>
                 </table>
               </div>
+            </section>
+
+            <section id="artifacts" className="mb-12 scroll-mt-20">
+              <h2 className="mb-4 text-2xl font-semibold border-b border-[var(--border)] pb-2">Artifact Checks</h2>
+              <p className="mb-4 text-[var(--secondary)]">
+                <code>Case.Artifacts</code> stores named structured JSON outputs alongside text output. Use it for route state, planner state, budget data, tool traces, or other deterministic workflow checks.
+              </p>
+              <pre className="bg-[var(--code-bg)] border border-[var(--border)] rounded-md px-4 py-3 font-mono text-sm overflow-x-auto">
+                <code>{`c := eval.Case{
+	Output: "Route is ready.",
+	Artifacts: map[string]json.RawMessage{
+		"route": json.RawMessage(\`{"status":"ready","total_minutes":98,"stops":["Pajaritos"]}\`),
+	},
+}
+
+r.Run(t, eval.ArtifactJSONPath{
+	Key: "route", Path: "status", Expected: "ready",
+}, c)
+r.Run(t, eval.ArtifactNumberLTE{
+	Key: "route", Path: "total_minutes", Max: 120,
+}, c)`}</code>
+              </pre>
+            </section>
+
+            <section id="trajectory" className="mb-12 scroll-mt-20">
+              <h2 className="mb-4 text-2xl font-semibold border-b border-[var(--border)] pb-2">Trajectory Checks</h2>
+              <p className="mb-4 text-[var(--secondary)]">
+                Use <code>Turn</code>, <code>ToolCall</code>, <code>Case.Turns</code>, and <code>Case.ExpectedToolCalls</code> to evaluate agent tool-use paths without leaving the normal metric pipeline.
+              </p>
+              <pre className="bg-[var(--code-bg)] border border-[var(--border)] rounded-md px-4 py-3 font-mono text-sm overflow-x-auto">
+                <code>{`c := eval.Case{
+	Turns: []eval.Turn{
+		{Role: eval.RoleUser, Content: "Where is order 42?"},
+		{Role: eval.RoleAssistant, ToolCalls: []eval.ToolCall{
+			{Name: "orders.lookup", Arguments: json.RawMessage(\`{"order_id":"42"}\`)},
+		}},
+	},
+	ExpectedToolCalls: []eval.ToolCall{
+		{Name: "orders.lookup", Arguments: json.RawMessage(\`{"order_id":"42"}\`)},
+	},
+}
+
+r.Run(t, eval.ToolCallAccuracy{Mode: eval.MatchStrict, MatchArgs: true}, c)
+r.Run(t, eval.ToolCallF1{MatchArgs: true, Threshold: 0.8}, c)
+r.Run(t, eval.ForbiddenTool{Names: []string{"orders.refund"}}, c)
+r.Run(t, eval.StepBudget{MaxSteps: 1}, c)`}</code>
+              </pre>
+              <p className="mt-3 text-sm text-[var(--muted)]">
+                Match modes are <code>MatchStrict</code>, <code>MatchUnordered</code>, <code>MatchSubset</code>, and <code>MatchSuperset</code>. JSON datasets can include optional <code>turns</code> and <code>expected_tool_calls</code> fields.
+              </p>
             </section>
 
             <section id="benchmarks" className="mb-12 scroll-mt-20">
@@ -321,148 +330,82 @@ func TestRAGAnswer(t *testing.T) {
 }`}</code>
               </pre>
 
-              <div className="mt-6 space-y-4">
-                <h3 className="text-sm font-semibold text-[var(--foreground)]">Metrics Tracked</h3>
-                <div className="grid gap-3 md:grid-cols-2">
-                  {[
-                    { label: "ns/op", desc: "Latency per judge call" },
-                    { label: "tokens/op", desc: "Mean tokens consumed per call" },
-                    { label: "score_mean", desc: "Average score across iterations" },
-                    { label: "score_stddev", desc: "Score consistency across runs" },
-                  ].map((m) => (
-                    <div
-                      key={m.label}
-                      onClick={() => setSelectedBenchMetric(m.label)}
-                      className="flex items-center gap-3 p-3 border border-[var(--border)] rounded-md bg-[var(--surface)] cursor-pointer hover:border-[var(--accent)] transition-colors"
-                    >
-                      <code className="text-xs bg-[var(--code-bg)] px-2 py-1 rounded text-[var(--accent)]">{m.label}</code>
-                      <span className="text-sm text-[var(--secondary)]">{m.desc}</span>
-                    </div>
-                  ))}
-                </div>
-              </div>
-
-              <div className="mt-6">
-                <h3 className="text-sm font-semibold text-[var(--foreground)] mb-3">Compare Runs</h3>
-                <pre className="bg-[var(--code-bg)] border border-[var(--border)] rounded-md px-4 py-3 font-mono text-sm overflow-x-auto">
-                  <code>{`# Baseline
-GOEVAL=1 go test -bench=. -count=5 > old.txt
-
-# After changes
-GOEVAL=1 go test -bench=. -count=5 > new.txt
-
-# Statistical comparison
-benchstat old.txt new.txt`}</code>
-                </pre>
-              </div>
-
-              <div className="mt-6">
-                <h3 className="text-sm font-semibold text-[var(--foreground)] mb-3">Persist Results</h3>
-                <p className="mb-3 text-sm text-[var(--secondary)]">
-                  Configure a <code className="bg-[var(--code-bg)] px-1 py-0.5 rounded text-[var(--accent)]">ResultSink</code> to write detailed JSONL logs for every run:
-                </p>
-                <pre className="bg-[var(--code-bg)] border border-[var(--border)] rounded-md px-4 py-3 font-mono text-sm overflow-x-auto">
-                  <code>{`r := eval.NewRunner(judge,
-	eval.WithResultSink(eval.DefaultResultSink()),
-)`}</code>
-                </pre>
-                <p className="mt-2 text-sm text-[var(--muted)]">
-                  Set <code className="bg-[var(--code-bg)] px-1 py-0.5 rounded text-[var(--accent)]">GOEVAL_RESULTS_DIR=/path/to/dir</code> to write <code className="bg-[var(--code-bg)] px-1 py-0.5 rounded text-[var(--accent)]">results.jsonl</code>.
-                </p>
-              </div>
-
-              <div className="mt-6">
-                <h3 className="text-sm font-semibold text-[var(--foreground)] mb-3">JSONL Result Structure</h3>
-                <p className="mb-3 text-sm text-[var(--secondary)]">
-                  Each line in results.jsonl contains one evaluation run:
-                </p>
-                <pre className="bg-[var(--code-bg)] border border-[var(--border)] rounded-md px-4 py-3 font-mono text-xs overflow-x-auto">
-                  <code>{`{
-  "timestamp": "2026-04-29T10:30:00Z",
-  "test_name": "TestRAGAnswer/Faithfulness",
-  "metric": "Faithfulness",
-  "score": 0.95,
-  "passed": true,
-  "reason": "19/20 claims supported by context",
-  "tokens": 1250,
-  "prompt_tokens": 820,
-  "completion_tokens": 430,
-  "latency_ns": 9452000,
-  "metadata": {"flow": "rag.retrieval", "tier": "critical"}
-}`}</code>
-                </pre>
+              <div className="mt-6 grid gap-3 md:grid-cols-2">
+                {[
+                  { label: "ns/op", desc: "Latency per judge call" },
+                  { label: "tokens/op", desc: "Mean tokens consumed per call" },
+                  { label: "score_mean", desc: "Average score across iterations" },
+                  { label: "score_stddev", desc: "Score consistency across runs" },
+                ].map((m) => (
+                  <div
+                    key={m.label}
+                    onClick={() => setSelectedBenchMetric(m.label)}
+                    className="flex items-center gap-3 p-3 border border-[var(--border)] rounded-md bg-[var(--surface)] cursor-pointer hover:border-[var(--accent)] transition-colors"
+                  >
+                    <code className="text-xs bg-[var(--code-bg)] px-2 py-1 rounded text-[var(--accent)]">{m.label}</code>
+                    <span className="text-sm text-[var(--secondary)]">{m.desc}</span>
+                  </div>
+                ))}
               </div>
             </section>
 
             <section id="cicd" className="mb-12 scroll-mt-20">
               <h2 className="mb-4 text-2xl font-semibold border-b border-[var(--border)] pb-2">CI/CD</h2>
               <p className="mb-4 text-[var(--secondary)]">
-                Integrate into any CI pipeline with a single environment variable. Evals run inside standard <code className="bg-[var(--code-bg)] px-1.5 py-0.5 rounded text-[var(--accent)]">go test</code>, so existing Go CI infrastructure works out of the box.
+                Persist JSONL results, compare baselines, summarize one run, and filter case tiers while keeping normal CI fast by default.
               </p>
               <pre className="bg-[var(--code-bg)] border border-[var(--border)] rounded-md px-4 py-3 font-mono text-sm overflow-x-auto">
-                <code>{`# Run evaluations
-GOEVAL=1 go test ./...
-
-# Run benchmarks for comparison
-GOEVAL=1 go test -bench=. -count=5 > old.txt
-GOEVAL=1 go test -bench=. -count=5 > new.txt
-benchstat old.txt new.txt`}</code>
+                <code>{`GOEVAL=1 GOEVAL_RESULTS_DIR=.eval-results go test ./...
+goeval compare old/results.jsonl new/results.jsonl
+goeval summarize .eval-results/results.jsonl`}</code>
               </pre>
               <div className="mt-4 rounded-md bg-[var(--surface)] p-4 text-sm border border-[var(--border)]">
                 <p className="font-semibold text-[var(--foreground)]">Environment Variables</p>
                 <ul className="mt-2 space-y-1 text-[var(--secondary)]">
-                  <li><code className="bg-[var(--code-bg)] px-1 py-0.5 rounded text-[var(--accent)]">GOEVAL=1</code> — Enable evaluations (required)</li>
-                  <li><code className="bg-[var(--code-bg)] px-1 py-0.5 rounded text-[var(--accent)]">GOEVAL_TRACE=1</code> — Debug judge I/O via t.Log</li>
-                  <li><code className="bg-[var(--code-bg)] px-1 py-0.5 rounded text-[var(--accent)]">GOEVAL_RESULTS_DIR</code> — Write results.jsonl here</li>
+                  <li><code className="bg-[var(--code-bg)] px-1 py-0.5 rounded text-[var(--accent)]">GOEVAL=1</code> - Enable evaluations</li>
+                  <li><code className="bg-[var(--code-bg)] px-1 py-0.5 rounded text-[var(--accent)]">GOEVAL_TRACE=1</code> - Log judge prompts and responses via <code>t.Log</code></li>
+                  <li><code className="bg-[var(--code-bg)] px-1 py-0.5 rounded text-[var(--accent)]">GOEVAL_RESULTS_DIR</code> - Write <code>results.jsonl</code> in this directory</li>
                 </ul>
               </div>
             </section>
 
-            {currentVersion === "v0.2" ? null : (
-              <section id="cli" className="mb-12 scroll-mt-20">
-                <h2 className="mb-4 text-2xl font-semibold border-b border-[var(--border)] pb-2">CLI</h2>
-                <p className="mb-4 text-[var(--secondary)]">
-                  Install the optional <code className="bg-[var(--code-bg)] px-1.5 py-0.5 rounded text-[var(--accent)]">goeval</code> CLI for a thin wrapper around common commands:
-                </p>
-                <pre className="bg-[var(--code-bg)] border border-[var(--border)] rounded-md px-4 py-3 font-mono text-sm mb-4">
-                  <code>go install github.com/igcodinap/go-eval/cmd/goeval@latest</code>
-                </pre>
-                <div className="space-y-4">
-                  <div className="border border-[var(--border)] rounded-md p-4 bg-[var(--surface)]">
-                    <h3 className="font-semibold text-[var(--foreground)] mb-2"><code className="text-[var(--accent)]">goeval test</code></h3>
-                    <p className="text-sm text-[var(--secondary)] mb-2">Run evaluations with go-eval enabled</p>
-                    <pre className="bg-[var(--code-bg)] p-2 rounded text-xs font-mono">
-                      <code>goeval test ./...</code>
+            <section id="cli" className="mb-12 scroll-mt-20">
+              <h2 className="mb-4 text-2xl font-semibold border-b border-[var(--border)] pb-2">CLI</h2>
+              <p className="mb-4 text-[var(--secondary)]">
+                The optional <code className="bg-[var(--code-bg)] px-1.5 py-0.5 rounded text-[var(--accent)]">goeval</code> CLI wraps common test and result workflows.
+              </p>
+              <div className="space-y-4">
+                {[
+                  { cmd: "goeval test ./...", desc: "Run go test with GOEVAL=1 set." },
+                  { cmd: "goeval compare old/results.jsonl new/results.jsonl", desc: "Compare baseline and current JSONL results; exits nonzero on regressions or missing rows." },
+                  { cmd: "goeval summarize current/results.jsonl", desc: "Summarize one JSONL result file by pass/fail, score, latency, and token aggregates." },
+                  { cmd: "goeval version", desc: "Print CLI version information." },
+                ].map((item) => (
+                  <div key={item.cmd} className="border border-[var(--border)] rounded-md p-4 bg-[var(--surface)]">
+                    <h3 className="font-semibold text-[var(--foreground)] mb-2"><code className="text-[var(--accent)]">{item.cmd.split(" ")[0]} {item.cmd.split(" ")[1] || ""}</code></h3>
+                    <p className="text-sm text-[var(--secondary)] mb-2">{item.desc}</p>
+                    <pre className="bg-[var(--code-bg)] p-2 rounded text-xs font-mono overflow-x-auto">
+                      <code>{item.cmd}</code>
                     </pre>
                   </div>
-                  <div className="border border-[var(--border)] rounded-md p-4 bg-[var(--surface)]">
-                    <h3 className="font-semibold text-[var(--foreground)] mb-2"><code className="text-[var(--accent)]">goeval compare</code></h3>
-                    <p className="text-sm text-[var(--secondary)] mb-2">Compare baseline vs current result files for regressions</p>
-                    <pre className="bg-[var(--code-bg)] p-2 rounded text-xs font-mono">
-                      <code>goeval compare old/results.jsonl new/results.jsonl</code>
-                    </pre>
-                    <p className="mt-2 text-xs text-[var(--muted)]">Exits nonzero when rows regress or disappear</p>
-                  </div>
-                  <div className="border border-[var(--border)] rounded-md p-4 bg-[var(--surface)]">
-                    <h3 className="font-semibold text-[var(--foreground)] mb-2"><code className="text-[var(--accent)]">goeval version</code></h3>
-                    <p className="text-sm text-[var(--secondary)]">Print version info</p>
-                  </div>
-                </div>
-              </section>
-            )}
+                ))}
+              </div>
+            </section>
 
             <section id="concepts" className="mb-12 scroll-mt-20">
               <h2 className="mb-4 text-2xl font-semibold border-b border-[var(--border)] pb-2">Core Concepts</h2>
               <div className="grid gap-4 md:grid-cols-2">
                 {[
-                  { term: "Case", desc: "Input, expected output, context, and optional metadata for a single evaluation scenario." },
-                  { term: "CaseMetadata", desc: "Standard keys (flow, tier, dataset) for categorizing and filtering cases." },
-                  { term: "Metric", desc: "A scoring function (Faithfulness, Contains, etc.) with a threshold and optional configuration." },
-                  { term: "Precheck", desc: "Conditional wrapper that skips expensive LLM metrics if a pre-check fails." },
-                  { term: "Judge", desc: "Your implementation of LLM-as-judge. Receives prompts, returns scores with reasoning." },
-                  { term: "JudgeMock", desc: "Scripted judge for testing without an LLM." },
-                  { term: "Runner", desc: "Executes Cases with Metrics. Handles parallelism, subtests, and result aggregation." },
-                  ...(currentVersion === "v0.3" ? [{ term: "ConversationMetric", desc: "Evaluate multi-turn agent conversations with context tracking across turns." }] : []),
+                  { term: "Case", desc: "Input, output, expected value, context, artifacts, turns, expected tool calls, and metadata." },
+                  { term: "Artifacts", desc: "Named structured JSON outputs for deterministic workflow checks." },
+                  { term: "Trajectory", desc: "Typed turns and tool calls for agent path evaluation." },
+                  { term: "Metric", desc: "A stateless scoring function with thresholded pass/fail behavior." },
+                  { term: "Precheck", desc: "Conditional wrapper that gates expensive metrics behind cheap checks." },
+                  { term: "Repeat", desc: "Wrapper for repeated runs, pass-rate aggregation, and score variance." },
+                  { term: "Judge", desc: "Concurrency-safe LLM-as-judge implementation returning scores and reasons." },
+                  { term: "Runner", desc: "Executes cases with metrics, handles GOEVAL gating, assertions, and result sinks." },
+                  { term: "CaseMetadata", desc: "Standard keys such as flow, tier, and dataset for filtering and reports." },
+                  { term: "MockJudge", desc: "Scripted judge for tests that should not call an LLM." },
                 ].map((item) => (
                   <div
                     key={item.term}
@@ -476,15 +419,13 @@ benchstat old.txt new.txt`}</code>
               </div>
             </section>
           </main>
-
-
         </div>
       </div>
 
       <footer className="border-t border-[var(--border)] bg-[var(--surface)]">
         <div className="mx-auto max-w-7xl px-4 py-6 md:px-8">
           <p className="text-sm text-[var(--muted)]">
-            go-eval v0.3 — MIT License —{" "}
+            go-eval v0.6 - MIT License -{" "}
             <a href="https://github.com/igcodinap/go-eval" className="text-[var(--accent)]">github.com/igcodinap/go-eval</a>
           </p>
         </div>

@@ -77,14 +77,19 @@ export interface ConceptDetail {
 export const conceptDetails: Record<string, ConceptDetail> = {
   Case: {
     term: "Case",
-    description: "Input, expected output, context, and optional metadata for a single evaluation scenario.",
+    description: "Input, output, context, artifacts, trajectory data, and metadata for a single evaluation scenario.",
     details: `The fundamental unit of evaluation. A Case represents one test scenario with:
 
 - \`Input\` — the question or prompt to evaluate
 - \`Output\` — your LLM's response (what you're testing)
 - \`Context\` — optional RAG context documents
 - \`Expected\` — optional expected value for deterministic checks
-- \`Metadata\` — custom key-value data for additional context`,
+- \`Artifacts\` — named structured JSON outputs for deterministic workflow checks
+- \`Turns\` — typed conversation or agent trajectory steps
+- \`ExpectedToolCalls\` — expected tool calls used by trajectory metrics
+- \`Metadata\` — custom key-value data for filtering and reports
+
+As of v0.4, external callers should use keyed struct literals such as \`eval.Case{Input: "..."}\`.`,
     example: {
       code: `c := eval.Case{
 	Input:   "What's the capital of France?",
@@ -95,6 +100,51 @@ export const conceptDetails: Record<string, ConceptDetail> = {
 		"source":  "rag_pipeline",
 	},
 }`,
+    },
+  },
+  Artifacts: {
+    term: "Artifacts",
+    description: "Named structured JSON outputs checked alongside text output.",
+    details: `Artifacts let eval suites validate intermediate state, planner output, tool payloads, route data, budgets, and other structured workflow outputs before or alongside judge metrics.
+
+Artifact values are \`json.RawMessage\`, so the core package stays stdlib-only and does not interpret artifact names. Common keys include \`trace\`, \`tools\`, \`route\`, \`state\`, and \`budget\`.
+
+Use \`ArtifactExists\`, \`ArtifactJSONPath\`, \`ArtifactFieldCount\`, \`ArtifactNumberLTE\`, and \`ArtifactArrayContains\` for deterministic checks.`,
+    example: {
+      code: `c := eval.Case{
+	Output: "Route is ready.",
+	Artifacts: map[string]json.RawMessage{
+		"route": json.RawMessage(\`{"status":"ready","total_minutes":98}\`),
+	},
+}
+
+r.Run(t, eval.ArtifactJSONPath{
+	Key: "route", Path: "status", Expected: "ready",
+}, c)`,
+    },
+  },
+  Trajectory: {
+    term: "Trajectory",
+    description: "Typed conversation turns and tool-call expectations for agent workflows.",
+    details: `Trajectory checks use \`Case.Turns\` and \`Case.ExpectedToolCalls\` without leaving the normal Metric pipeline.
+
+\`Turn\` stores role, content, optional speaker/tool labels, tool call IDs, tool calls, and metadata. \`ToolCall\` stores name, JSON arguments, result, error, IDs, and metadata.
+
+\`ToolCallAccuracy\` supports \`MatchStrict\`, \`MatchUnordered\`, \`MatchSubset\`, and \`MatchSuperset\`. \`ToolCallF1\`, \`ForbiddenTool\`, and \`StepBudget\` cover looser matching, policy gates, and tool-call budgets.`,
+    example: {
+      code: `c := eval.Case{
+	Turns: []eval.Turn{
+		{Role: eval.RoleUser, Content: "Where is order 42?"},
+		{Role: eval.RoleAssistant, ToolCalls: []eval.ToolCall{
+			{Name: "orders.lookup", Arguments: json.RawMessage(\`{"order_id":"42"}\`)},
+		}},
+	},
+	ExpectedToolCalls: []eval.ToolCall{
+		{Name: "orders.lookup", Arguments: json.RawMessage(\`{"order_id":"42"}\`)},
+	},
+}
+
+r.Run(t, eval.ToolCallAccuracy{Mode: eval.MatchStrict, MatchArgs: true}, c)`,
     },
   },
   CaseMetadata: {
@@ -122,19 +172,21 @@ Metadata is copied into JSONL results by \`Runner\`. Use \`WithCaseFilter\` to r
 }`,
     },
   },
-  JudgeMock: {
-    term: "JudgeMock",
+  MockJudge: {
+    term: "MockJudge",
     description: "Scripted judge implementation for testing without an LLM.",
-    details: `Use \`JudgeMock\` to test evaluation logic without calling a real LLM. It returns predefined scores and reasons, enabling deterministic test runs.
+    details: `Use \`MockJudge\` to test evaluation logic without calling a real LLM. It returns predefined scores and reasons, enabling deterministic test runs.
 
 Perfect for:
 - Unit testing eval suites
 - CI pipelines without API costs
 - Developing metric configurations`,
     example: {
-      code: `judge := eval.JudgeMock{
-	Score: 0.85,
-	Reason: "Mock response for testing",
+      code: `judge := &eval.MockJudge{
+	Response: eval.JudgeResponse{
+		Score:  0.85,
+		Reason: "Mock response for testing",
+	},
 }
 
 r := eval.NewRunner(judge)
@@ -153,13 +205,16 @@ This pattern is ideal for:
 - Reducing LLM API calls in CI`,
     example: {
       code: `r.Run(t, eval.Precheck{
-	Pre:  eval.Contains{Substring: "cancel"},
+	Pre:  eval.Contains{},
 	Main: eval.Compound{
 		Dimensions: []eval.Dimension{
 			{Name: "helpfulness", Rubric: "...", Threshold: 0.7},
 		},
 	},
-}, c)`,
+}, eval.Case{
+	Output:   "You can cancel from Billing.",
+	Expected: "cancel",
+})`,
     },
   },
   Metric: {
@@ -169,7 +224,9 @@ This pattern is ideal for:
 
 Available metrics:
 - **LLM-as-Judge**: Faithfulness, Hallucination, AnswerRelevancy, ContextPrecision, GEval, Compound
-- **Deterministic**: Contains, Regex, JSONPath, FieldCount
+- **Deterministic**: Contains, Regex, JSONPath, FieldCount, artifact metrics
+- **Trajectory**: ToolCallAccuracy, ToolCallF1, ForbiddenTool, StepBudget
+- **Wrappers**: Precheck, Repeat, WithTokenBudget, WithLatencyBudget
 
 Each metric has configurable parameters and a \`Threshold\` that determines pass/fail.`,
     example: {
@@ -177,7 +234,10 @@ Each metric has configurable parameters and a \`Threshold\` that determines pass
 r.Run(t, eval.Faithfulness{Threshold: 0.8}, c)
 
 // Deterministic metric
-r.Run(t, eval.Contains{Substring: "hello world"}, c)`,
+r.Run(t, eval.Contains{}, eval.Case{
+	Output:   "hello world",
+	Expected: "hello",
+})`,
     },
   },
   Judge: {
@@ -186,17 +246,17 @@ r.Run(t, eval.Contains{Substring: "hello world"}, c)`,
     details: `The Judge is your abstraction over the LLM. You implement the \`Judge\` interface and go-eval handles the rest.
 
 Required method:
-\`JudgeResponse Judge(ctx context.Context, prompt string) error\`
+\`Evaluate(ctx context.Context, prompt string) (JudgeResponse, error)\`
 
 The prompt is constructed by go-eval based on the metric and case. Your judge returns a score (0.0-1.0) and optional reasoning.
 
-go-eval provides helper judges like \`ScriptedJudge\` for testing, or you can wrap any LLM provider (OpenAI, Anthropic, local, etc.).`,
+go-eval provides helper judges like \`MockJudge\` for testing, or you can wrap any LLM provider (OpenAI, Anthropic, local, etc.).`,
     example: {
       code: `type MyJudge struct {
 	client *openai.Client
 }
 
-func (j *MyJudge) Judge(ctx context.Context, prompt string) (eval.JudgeResponse, error) {
+func (j *MyJudge) Evaluate(ctx context.Context, prompt string) (eval.JudgeResponse, error) {
 	resp, err := j.client.Chat.Completions.Create(ctx, openai.ChatCompletionInput{
 		Model: "gpt-4",
 		Messages: []openai.Message{{Role: "user", Content: prompt}},
@@ -233,22 +293,18 @@ func TestRAG(t *testing.T) {
 }`,
     },
   },
-  ConversationMetric: {
-    term: "ConversationMetric",
-    description: "Evaluate multi-turn agent conversations with context tracking across turns.",
-    details: `ConversationMetric evaluates multi-turn conversations by tracking context across multiple exchanges. Unlike single-turn metrics that evaluate each response independently, ConversationMetric maintains conversation history to assess coherence and task completion over time.
+  Repeat: {
+    term: "Repeat",
+    description: "Run metrics more than once and aggregate pass-rate and score variance.",
+    details: `Repeat is useful when a judge metric is nondeterministic enough that one sample is not representative.
 
-Key features:
-- Tracks context across multiple conversation turns
-- Evaluates coherence and progression
-- Measures task completion across the conversation
-- Useful for agent-style workflows with tool use and follow-up
-
-Available in v0.3 (unreleased).`,
+\`Repeat\` returns the mean score, aggregate token and latency counts, plus dimensions for pass rate, mean score, standard deviation, minimum score, and maximum score. \`RepeatN\` is the helper that requires every repeated run to pass.`,
     example: {
-      code: `r.Run(t, eval.ConversationMetric{
-	Threshold: 0.7,
-}, cases)`,
+      code: `r.Run(t, eval.Repeat{
+	Metric:   eval.Faithfulness{Threshold: 0.8},
+	N:        3,
+	PassRate: 2.0 / 3.0,
+}, c)`,
     },
   },
 };

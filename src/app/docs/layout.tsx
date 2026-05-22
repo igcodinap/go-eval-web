@@ -22,7 +22,7 @@ const navGroups = [
     title: "LLM Evals",
     items: [
       { label: "Concepts", href: "/docs/getting-started#concepts" },
-      { label: "End-to-End Evals", href: "/docs/getting-started#e2e-evals" },
+      { label: "First Test Run", href: "/docs/getting-started#first-run" },
       { label: "Unit Testing in CI/CD", href: "/docs/getting-started#ci-cd" },
     ],
   },
@@ -31,7 +31,17 @@ const navGroups = [
     items: [
       { label: "Introduction", href: "/docs/getting-started#metrics-overview" },
       { label: "Deterministic", href: "/docs/getting-started#deterministic" },
-      { label: "Compound", href: "/docs/getting-started#compound" },
+      { label: "Artifacts", href: "/docs/getting-started#artifacts" },
+      { label: "Trajectory", href: "/docs/getting-started#trajectory" },
+      { label: "Repeat", href: "/docs/getting-started#repeat" },
+    ],
+  },
+  {
+    title: "Results",
+    items: [
+      { label: "JSONL Results", href: "/docs/getting-started#results" },
+      { label: "CLI", href: "/docs/getting-started#cli" },
+      { label: "Changelog", href: "/docs/changelog" },
     ],
   },
 ];
@@ -119,7 +129,7 @@ export default function DocsLayout({
       <footer className="border-t border-[var(--border)] bg-[var(--surface)]">
         <div className="mx-auto max-w-7xl px-4 py-6 md:px-8">
           <p className="text-sm text-[var(--muted)]">
-            go-eval v0.2 — MIT License —{" "}
+            go-eval v0.6 - MIT License -{" "}
             <a href="https://github.com/igcodinap/go-eval" className="text-[var(--accent)]">
               github.com/igcodinap/go-eval
             </a>

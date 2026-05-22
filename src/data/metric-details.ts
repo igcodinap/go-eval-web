@@ -1,6 +1,8 @@
+export type MetricType = "judge" | "deterministic" | "trajectory" | "wrapper";
+
 export interface MetricDetail {
   name: string;
-  type: "judge" | "deterministic";
+  type: MetricType;
   purpose: string;
   howItWorks: string;
   threshold: string;
@@ -10,366 +12,343 @@ export interface MetricDetail {
   };
 }
 
+const pass = (metric: string, reason: string) => `=== RUN   TestEval/${metric}
+    eval_test.go:24: ${metric}: PASS (${reason})
+--- PASS: TestEval/${metric} (0.15ms)`;
+
+const fail = (metric: string, reason: string) => `=== RUN   TestEval/${metric}
+    eval_test.go:24: ${metric}: FAIL (${reason})
+--- FAIL: TestEval/${metric} (0.15ms)`;
+
 export const metricDetails: Record<string, MetricDetail> = {
   Faithfulness: {
     name: "Faithfulness",
     type: "judge",
-    purpose: "Verify RAG outputs don't contradict the retrieved context",
-    howItWorks: "Judge checks each output claim against the Context, scoring the fraction that's supported",
+    purpose: "Verify RAG outputs do not contradict retrieved context",
+    howItWorks: "The judge checks output claims against Case.Context and scores how much is supported.",
     threshold: "0.8",
     example: {
-      code: `package evaltest
-
-import (
-	"testing"
-	eval "github.com/igcodinap/go-eval"
-)
-
-func TestRAGFaithfulness(t *testing.T) {
-	judge := newMyJudge(t)
-	r := eval.NewRunner(judge)
-
-	c := eval.Case{
-		Input:   "What's the capital of France?",
-		Output:  "The capital of France is Paris.",
-		Context: []string{"Paris is the capital of France and its largest city."},
-	}
-
-	r.Run(t, eval.Faithfulness{Threshold: 0.8}, c)
-}`,
-      output: `=== RUN   TestRAGFaithfulness
-    faithfulness_test.go:18: Faithfulness: 0.95 (supported 19/20 claims)
---- PASS: TestRAGFaithfulness (45.23ms)`,
+      code: `r.Run(t, eval.Faithfulness{Threshold: 0.8}, eval.Case{
+	Input:   "What's the capital of France?",
+	Output:  "Paris is the capital of France.",
+	Context: []string{"Paris is the capital of France."},
+})`,
+      output: pass("Faithfulness", "claims supported by context"),
     },
   },
   Hallucination: {
     name: "Hallucination",
     type: "judge",
-    purpose: "Catch outputs that invent facts not present in Context",
-    howItWorks: "Judge identifies claims that don't appear in Context; score = non-invented / total",
+    purpose: "Catch outputs that invent facts outside the supplied context",
+    howItWorks: "The judge estimates whether factual claims are grounded instead of invented.",
     threshold: "0.9",
     example: {
-      code: `package evaltest
-
-import (
-	"testing"
-	eval "github.com/igcodinap/go-eval"
-)
-
-func TestRAGHallucination(t *testing.T) {
-	judge := newMyJudge(t)
-	r := eval.NewRunner(judge)
-
-	c := eval.Case{
-		Input:   "What's the capital of France?",
-		Output:  "The capital of France is Paris, where the Eiffel Tower is located.",
-		Context: []string{"Paris is the capital of France."},
-	}
-
-	r.Run(t, eval.Hallucination{Threshold: 0.9}, c)
-}`,
-      output: `=== RUN   TestRAGHallucination
-    hallucination_test.go:18: Hallucination: 0.67 (invented 1/3 claims)
---- FAIL: TestRAGHallucination (52.18ms)`,
+      code: `r.Run(t, eval.Hallucination{Threshold: 0.9}, eval.Case{
+	Output:  "Paris is the capital of France and has 30 million residents.",
+	Context: []string{"Paris is the capital of France."},
+})`,
+      output: fail("Hallucination", "unsupported claim detected"),
     },
   },
   AnswerRelevancy: {
     name: "AnswerRelevancy",
     type: "judge",
-    purpose: "Ensure outputs actually address the user's question",
-    howItWorks: "Judge evaluates whether Output directly answers Input, penalizing tangentially related responses",
+    purpose: "Ensure the output directly addresses the user input",
+    howItWorks: "The judge compares Case.Input and Case.Output and penalizes off-topic or indirect answers.",
     threshold: "0.7",
     example: {
-      code: `package evaltest
-
-import (
-	"testing"
-	eval "github.com/igcodinap/go-eval"
-)
-
-func TestAnswerRelevancy(t *testing.T) {
-	judge := newMyJudge(t)
-	r := eval.NewRunner(judge)
-
-	c := eval.Case{
-		Input:   "What's the capital of France?",
-		Output:  "France is a country in Western Europe known for wine and cheese.",
-		Context: []string{"Paris is the capital of France."},
-	}
-
-	r.Run(t, eval.AnswerRelevancy{Threshold: 0.7}, c)
-}`,
-      output: `=== RUN   TestAnswerRelevancy
-    relevancy_test.go:18: AnswerRelevancy: 0.45 (indirectly relevant)
---- FAIL: TestAnswerRelevancy (48.92ms)`,
+      code: `r.Run(t, eval.AnswerRelevancy{Threshold: 0.7}, eval.Case{
+	Input:  "How do I cancel my plan?",
+	Output: "Open Billing, then choose Cancel subscription.",
+})`,
+      output: pass("AnswerRelevancy", "answer directly addresses input"),
     },
   },
   ContextPrecision: {
     name: "ContextPrecision",
     type: "judge",
-    purpose: "Check if retrieved documents actually help answer the Input",
-    howItWorks: "Judge scores each retrieved doc on relevance to Input, reports mean precision",
+    purpose: "Check whether retrieved context documents are relevant to the input",
+    howItWorks: "The judge scores each context item for relevance to Case.Input and reports mean precision.",
     threshold: "0.7",
     example: {
-      code: `package evaltest
-
-import (
-	"testing"
-	eval "github.com/igcodinap/go-eval"
-)
-
-func TestContextPrecision(t *testing.T) {
-	judge := newMyJudge(t)
-	r := eval.NewRunner(judge)
-
-	c := eval.Case{
-		Input:   "What's the capital of France?",
-		Output:  "Paris is the capital of France.",
-		Context: []string{
-			"Paris is the capital of France.",
-			"The Eiffel Tower is in Paris.",
-			"France is a member of the EU.",
-		},
-	}
-
-	r.Run(t, eval.ContextPrecision{Threshold: 0.7}, c)
-}`,
-      output: `=== RUN   TestContextPrecision
-    context_test.go:18: ContextPrecision: 0.89 (doc1: 1.0, doc2: 0.9, doc3: 0.0)
---- PASS: TestContextPrecision (61.34ms)`,
+      code: `r.Run(t, eval.ContextPrecision{Threshold: 0.7}, eval.Case{
+	Input: "What's the capital of France?",
+	Context: []string{
+		"Paris is the capital of France.",
+		"Berlin is the capital of Germany.",
+	},
+})`,
+      output: pass("ContextPrecision", "retrieved context is mostly relevant"),
     },
   },
   GEval: {
     name: "GEval",
     type: "judge",
-    purpose: "Score custom criteria the built-in metrics don't cover",
-    howItWorks: "You define Criteria (rubric description) and optional Steps; judge applies your rubric",
+    purpose: "Score custom criteria that built-in metrics do not cover",
+    howItWorks: "You provide rubric Criteria and optional Steps; the judge applies that rubric to the case.",
     threshold: "0.7",
     example: {
-      code: `package evaltest
-
-import (
-	"testing"
-	eval "github.com/igcodinap/go-eval"
-)
-
-func TestToneCheck(t *testing.T) {
-	judge := newMyJudge(t)
-	r := eval.NewRunner(judge)
-
-	c := eval.Case{
-		Input:   "Explain why Go is good for servers.",
-		Output:  "Go is the absolute bestest thing ever for servers!!!",
-		Context: []string{},
-	}
-
-	r.Run(t, eval.GEval{
-		Threshold: 0.7,
-		Criteria: "Response should be professional and factual, not hyperbolic.",
-	}, c)
-}`,
-      output: `=== RUN   TestToneCheck
-    geval_test.go:18: GEval: 0.30 (uses hyperbolic language "bestest", "ever!!!")
---- FAIL: TestToneCheck (67.12ms)`,
+      code: `r.Run(t, eval.GEval{
+	Criteria:  "Response should be concise, professional, and actionable.",
+	Threshold: 0.7,
+}, c)`,
+      output: pass("GEval", "rubric score met threshold"),
     },
   },
   Compound: {
     name: "Compound",
     type: "judge",
-    purpose: "Evaluate multiple quality dimensions in one judge call (reduces cost)",
-    howItWorks: "Multiple Dimensions with individual Rubrics evaluated together, returns per-dimension scores",
+    purpose: "Evaluate several related rubric dimensions in one judge call",
+    howItWorks: "The judge returns per-dimension scores and the metric fails when any thresholded dimension fails.",
     threshold: "per-dimension",
     example: {
-      code: `package evaltest
-
-import (
-	"testing"
-	eval "github.com/igcodinap/go-eval"
-)
-
-func TestResponseQuality(t *testing.T) {
-	judge := newMyJudge(t)
-	r := eval.NewRunner(judge)
-
-	c := eval.Case{
-		Input:   "What's the capital of France?",
-		Output:  "Paris, and also it's where the Louvre is.",
-		Context: []string{"Paris is the capital of France."},
-	}
-
-	r.Run(t, eval.Compound{
-		Dimensions: []eval.Dimension{
-			{Name: "faithfulness", Threshold: 0.8, Rubric: "Output claims must be supported by context."},
-			{Name: "relevance", Threshold: 0.7, Rubric: "Output must directly answer the question."},
-		},
-	}, c)
-}`,
-      output: `=== RUN   TestResponseQuality
-    compound_test.go:18: Compound:
-      faithfulness: 0.80 (1.0/1 supported claims) ✓
-      relevance: 0.92 (directly answers) ✓
---- PASS: TestResponseQuality (78.45ms)`,
+      code: `r.Run(t, eval.Compound{
+	Dimensions: []eval.Dimension{
+		{Name: "grounding", Rubric: "Claims are supported.", Threshold: 0.8},
+		{Name: "directness", Rubric: "Answer is direct.", Threshold: 0.7},
+	},
+}, c)`,
+      output: pass("Compound", "all dimensions passed"),
+    },
+  },
+  Precheck: {
+    name: "Precheck",
+    type: "wrapper",
+    purpose: "Skip expensive LLM metrics when a cheap guard fails",
+    howItWorks: "Runs Pre first; Main only runs when the precheck passes.",
+    threshold: "wrapped metric",
+    example: {
+      code: `r.Run(t, eval.Precheck{
+	Pre:  eval.Regex{Pattern: "^\\\\s*\\\\{"},
+	Main: eval.GEval{Criteria: "JSON answer is grounded.", Threshold: 0.8},
+}, c)`,
+      output: pass("Precheck", "precheck passed, main metric ran"),
     },
   },
   Contains: {
     name: "Contains",
     type: "deterministic",
-    purpose: "Fast gate for mandatory text or keywords before expensive LLM checks",
-    howItWorks: "Simple substring search; pass if exact string found, fail otherwise",
+    purpose: "Check that output contains a required substring",
+    howItWorks: "Performs a simple substring match against Case.Output.",
     threshold: "binary",
     example: {
-      code: `package evaltest
-
-import (
-	"testing"
-	eval "github.com/igcodinap/go-eval"
-)
-
-func TestContainsEmail(t *testing.T) {
-	r := eval.NewRunner(nil) // no judge needed
-
-	c := eval.Case{
-		Input:   "Send verification code",
-		Output:  "Your code is ABC123. Sent to user@example.com",
-	}
-
-	r.Run(t, eval.Contains{Substring: "user@example.com"}, c)
-}`,
-      output: `=== RUN   TestContainsEmail
-    contains_test.go:14: Contains: PASS (substring found)
---- PASS: TestContainsEmail (0.12ms)`,
+      code: `r.Run(t, eval.Contains{}, eval.Case{
+	Output:   "Paris is the capital of France.",
+	Expected: "Paris",
+})`,
+      output: pass("Contains", "substring found"),
     },
   },
   Regex: {
     name: "Regex",
     type: "deterministic",
-    purpose: "Validate output format compliance (emails, IDs, codes, etc.)",
-    howItWorks: "Pattern match using regex; pass if matches, fail if doesn't match",
+    purpose: "Validate output against a regular expression",
+    howItWorks: "Runs the configured regexp against Case.Output.",
     threshold: "binary",
     example: {
-      code: `package evaltest
-
-import (
-	"testing"
-	eval "github.com/igcodinap/go-eval"
-)
-
-func TestEmailFormat(t *testing.T) {
-	r := eval.NewRunner(nil)
-
-	c := eval.Case{
-		Input:   "Generate user email",
-		Output:  "user123@example.com",
-	}
-
-	r.Run(t, eval.Regex{
-		Pattern: \`^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$\`,
-	}, c)
-}`,
-      output: `=== RUN   TestEmailFormat
-    regex_test.go:14: Regex: PASS (matched pattern)
---- PASS: TestEmailFormat (0.08ms)`,
+      code: `r.Run(t, eval.Regex{Pattern: \`(?i)\\bparis\\b\`}, eval.Case{
+	Output: "Paris is the capital of France.",
+})`,
+      output: pass("Regex", "pattern matched"),
     },
   },
   JSONPath: {
     name: "JSONPath",
     type: "deterministic",
-    purpose: "Assert specific values in structured JSON outputs (API responses, extracted data)",
-    howItWorks: "Extract value at your JSONPath, compare to expected value",
+    purpose: "Assert a value inside JSON output",
+    howItWorks: "Extracts a JSON path from Case.Output and compares it to Case.Expected.",
     threshold: "binary",
     example: {
-      code: `package evaltest
-
-import (
-	"testing"
-	eval "github.com/igcodinap/go-eval"
-)
-
-func TestAPIResponse(t *testing.T) {
-	r := eval.NewRunner(nil)
-
-	c := eval.Case{
-		Input:   "Get user profile",
-		Output:  \`{"id": 12345, "name": "Alice", "verified": true}\`,
-	}
-
-	r.Run(t, eval.JSONPath{
-		Path:     "$.id",
-		Expected: 12345,
-	}, c)
-}`,
-      output: `=== RUN   TestAPIResponse
-    jsonpath_test.go:14: JSONPath: PASS ($.id == 12345)
---- PASS: TestAPIResponse (0.15ms)`,
+      code: `r.Run(t, eval.MustJSONPath("answer.city"), eval.Case{
+	Output:   \`{"answer":{"city":"Paris"}}\`,
+	Expected: "Paris",
+})`,
+      output: pass("JSONPath", "path matched expected value"),
     },
   },
   FieldCount: {
     name: "FieldCount",
     type: "deterministic",
-    purpose: "Enforce minimum field count in JSON outputs (completeness check)",
-    howItWorks: "Count non-null top-level keys; pass if >= configured minimum",
+    purpose: "Enforce a minimum number of non-null JSON fields",
+    howItWorks: "Counts non-null top-level fields in JSON output and compares the count to MinFields.",
     threshold: "config",
     example: {
-      code: `package evaltest
-
-import (
-	"testing"
-	eval "github.com/igcodinap/go-eval"
-)
-
-func TestUserProfileCompleteness(t *testing.T) {
-	r := eval.NewRunner(nil)
-
-	c := eval.Case{
-		Input:   "Create user profile",
-		Output:  \`{"id": 1, "name": "Bob", "email": "bob@test.com"}\`,
-	}
-
-	r.Run(t, eval.FieldCount{
-		MinFields: 3,
-	}, c)
-}`,
-      output: `=== RUN   TestUserProfileCompleteness
-    fieldcount_test.go:14: FieldCount: PASS (3 fields >= min 3)
---- PASS: TestUserProfileCompleteness (0.09ms)`,
+      code: `r.Run(t, eval.FieldCount{MinFields: 2}, eval.Case{
+	Output: \`{"answer":"Paris","confidence":0.98}\`,
+})`,
+      output: pass("FieldCount", "2 fields >= minimum 2"),
     },
   },
-  Precheck: {
-    name: "Precheck",
+  ArtifactExists: {
+    name: "ArtifactExists",
     type: "deterministic",
-    purpose: "Conditional evaluation gate - skip expensive LLM checks if pre metric fails",
-    howItWorks: "Runs a deterministic metric first (Pre); if it fails, skips the main LLM metric entirely. Ideal for gating expensive evaluations behind fast format checks.",
+    purpose: "Check that a named structured artifact exists on the case",
+    howItWorks: "Looks up Case.Artifacts by key before any JSON parsing.",
     threshold: "binary",
     example: {
-      code: `package evaltest
-
-import (
-	"testing"
-	eval "github.com/igcodinap/go-eval"
-)
-
-func TestSupportReply(t *testing.T) {
-	judge := newMyJudge(t)
-	r := eval.NewRunner(judge)
-
-	c := eval.Case{
-		Input:   "How do I cancel my plan?",
-		Output:  "You can cancel from Billing > Subscription.",
-	}
-
-	r.Run(t, eval.Precheck{
-		Pre:  eval.Contains{Substring: "cancel"},
-		Main: eval.Compound{
-			Dimensions: []eval.Dimension{
-				{Name: "helpfulness", Rubric: "Actionable next step", Threshold: 0.7},
-			},
-		},
-	}, c)
-}`,
-      output: `=== RUN   TestSupportReply
-    precheck_test.go:18: Precheck: PASS (contains "cancel")
-    precheck_test.go:18: Compound: faithfulness: 0.85 ✓
---- PASS: TestSupportReply (82.34ms)`,
+      code: `r.Run(t, eval.ArtifactExists{Key: "route"}, eval.Case{
+	Artifacts: map[string]json.RawMessage{
+		"route": json.RawMessage(\`{"status":"ready"}\`),
+	},
+})`,
+      output: pass("ArtifactExists", "artifact \"route\" exists"),
+    },
+  },
+  ArtifactJSONPath: {
+    name: "ArtifactJSONPath",
+    type: "deterministic",
+    purpose: "Assert a JSON value inside a named artifact",
+    howItWorks: "Parses Case.Artifacts[Key], extracts Path, and compares the stringified JSON value to Expected.",
+    threshold: "binary",
+    example: {
+      code: `r.Run(t, eval.ArtifactJSONPath{
+	Key: "route", Path: "status", Expected: "ready",
+}, c)`,
+      output: pass("ArtifactJSONPath", "artifact path matched expected value"),
+    },
+  },
+  ArtifactFieldCount: {
+    name: "ArtifactFieldCount",
+    type: "deterministic",
+    purpose: "Require enough non-null fields inside an artifact object",
+    howItWorks: "Counts non-null fields at the artifact root or configured path.",
+    threshold: "config",
+    example: {
+      code: `r.Run(t, eval.ArtifactFieldCount{
+	Key: "state", Path: "payment", MinFields: 2,
+}, c)`,
+      output: pass("ArtifactFieldCount", "field count met minimum"),
+    },
+  },
+  ArtifactNumberLTE: {
+    name: "ArtifactNumberLTE",
+    type: "deterministic",
+    purpose: "Check that a numeric artifact value stays under a maximum",
+    howItWorks: "Extracts a JSON number from an artifact and passes when it is less than or equal to Max.",
+    threshold: "binary",
+    example: {
+      code: `r.Run(t, eval.ArtifactNumberLTE{
+	Key: "route", Path: "total_minutes", Max: 120,
+}, c)`,
+      output: pass("ArtifactNumberLTE", "numeric value within budget"),
+    },
+  },
+  ArtifactArrayContains: {
+    name: "ArtifactArrayContains",
+    type: "deterministic",
+    purpose: "Check that an artifact array contains an expected value",
+    howItWorks: "Extracts an array from a named artifact and compares stringified JSON values.",
+    threshold: "binary",
+    example: {
+      code: `r.Run(t, eval.ArtifactArrayContains{
+	Key: "route", Path: "stops", Expected: "Pajaritos",
+}, c)`,
+      output: pass("ArtifactArrayContains", "array contained expected value"),
+    },
+  },
+  ToolCallAccuracy: {
+    name: "ToolCallAccuracy",
+    type: "trajectory",
+    purpose: "Compare actual tool calls with expected calls under a match mode",
+    howItWorks: "Flattens Case.Turns tool calls and matches them against Case.ExpectedToolCalls using strict, unordered, subset, or superset matching.",
+    threshold: "1.0",
+    example: {
+      code: `r.Run(t, eval.ToolCallAccuracy{
+	Mode: eval.MatchStrict, MatchArgs: true,
+}, c)`,
+      output: pass("ToolCallAccuracy", "expected tool calls matched"),
+    },
+  },
+  ToolCallF1: {
+    name: "ToolCallF1",
+    type: "trajectory",
+    purpose: "Report precision, recall, and F1 for tool-call matches",
+    howItWorks: "Counts matched tool calls and emits precision, recall, and f1 dimensions.",
+    threshold: "0.8",
+    example: {
+      code: `r.Run(t, eval.ToolCallF1{
+	MatchArgs: true,
+	Threshold: 0.8,
+}, c)`,
+      output: pass("ToolCallF1", "precision and recall met threshold"),
+    },
+  },
+  ForbiddenTool: {
+    name: "ForbiddenTool",
+    type: "trajectory",
+    purpose: "Fail when disallowed tool names appear in the trajectory",
+    howItWorks: "Scans flattened tool calls from Case.Turns for configured forbidden names.",
+    threshold: "binary",
+    example: {
+      code: `r.Run(t, eval.ForbiddenTool{
+	Names: []string{"orders.refund"},
+}, c)`,
+      output: pass("ForbiddenTool", "no forbidden tools used"),
+    },
+  },
+  StepBudget: {
+    name: "StepBudget",
+    type: "trajectory",
+    purpose: "Keep tool-call count within a configured budget",
+    howItWorks: "Counts flattened tool calls across Case.Turns and fails when the count exceeds MaxSteps.",
+    threshold: "binary",
+    example: {
+      code: `r.Run(t, eval.StepBudget{MaxSteps: 2}, c)`,
+      output: pass("StepBudget", "step budget satisfied"),
+    },
+  },
+  Repeat: {
+    name: "Repeat",
+    type: "wrapper",
+    purpose: "Run a metric multiple times and aggregate pass rate plus score stats",
+    howItWorks: "Repeat reruns a wrapped metric N times; RepeatN is the helper form that requires every run to pass.",
+    threshold: "pass rate 1.0",
+    example: {
+      code: `r.Run(t, eval.Repeat{
+	Metric:   eval.Faithfulness{Threshold: 0.8},
+	N:        3,
+	PassRate: 2.0 / 3.0,
+}, c)`,
+      output: pass("Repeat", "2/3 runs passed, mean score 0.86"),
+    },
+  },
+  WithTokenBudget: {
+    name: "WithTokenBudget",
+    type: "wrapper",
+    purpose: "Fail a wrapped metric when token usage exceeds a maximum",
+    howItWorks: "Preserves the inner score and token counts, then sets Passed false when Tokens exceeds MaxTokens.",
+    threshold: "token max",
+    example: {
+      code: `r.Run(t, eval.WithTokenBudget(
+	1200,
+	eval.Faithfulness{Threshold: 0.8},
+), c)`,
+      output: pass("WithTokenBudget", "inner metric passed within token budget"),
+    },
+  },
+  WithLatencyBudget: {
+    name: "WithLatencyBudget",
+    type: "wrapper",
+    purpose: "Fail a wrapped metric when latency exceeds a maximum",
+    howItWorks: "Measures or preserves latency for the inner metric and fails when it exceeds MaxLatency.",
+    threshold: "duration max",
+    example: {
+      code: `r.Run(t, eval.WithLatencyBudget(
+	2*time.Second,
+	eval.AnswerRelevancy{Threshold: 0.7},
+), c)`,
+      output: pass("WithLatencyBudget", "inner metric passed within latency budget"),
     },
   },
 };
+
+const metricTypeOrder: Record<MetricType, number> = {
+  judge: 0,
+  deterministic: 1,
+  trajectory: 2,
+  wrapper: 3,
+};
+
+export const orderedMetricDetails = Object.values(metricDetails).sort(
+  (a, b) => metricTypeOrder[a.type] - metricTypeOrder[b.type],
+);
