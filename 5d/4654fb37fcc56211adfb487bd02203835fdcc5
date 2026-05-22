@@ -1,0 +1,40 @@
+src/app/docs/agent-skills/page.tsx
+  s_a2df8e4be81ec1::t_34e1dacc7e9ed4 3-28,30,39-42,44-47,49-55,57,59-62,64-72,76-88,91
+src/data/benchmark-concept-details.ts
+  s_a2df8e4be81ec1::t_3f317428c90509 175-176,178,185-189,208,214-217,237-240,249,253,259
+  s_a2df8e4be81ec1::t_666079ee02c9c4 80,87-92,105-149,227-229,296-301,303-307
+src/app/docs/layout.tsx
+  s_a2df8e4be81ec1::t_ba2ed19f81e9f4 25,34-44,132,141
+src/app/globals.css
+  s_a2df8e4be81ec1::t_a99922e38739b2 132-141,153
+src/data/metric-details.ts
+  s_a2df8e4be81ec1::t_a44520c559c749 135-137,149
+  s_a2df8e4be81ec1::t_16ef487a14ad30 344-354
+  s_a2df8e4be81ec1::t_ecb1f0f241ed19 1-2,5,15-22,27-28,31-36,42-43,46-50,56-57,60-64,70-71,74-81,87-88,91-95,101-102,105-125,131-132,138-139,145-146,150-152,158-159,162-166,172-173,176-179,182-183,185-186,189-340
+src/app/page.tsx
+  s_a2df8e4be81ec1::t_f513fb3ffa6794 408
+  s_a2df8e4be81ec1::t_fc02b9bee8ca3c 8,39
+  s_a2df8e4be81ec1::t_42c68e27bd7334 24-25,28,32-37,45,70,83,86,91,103,106,133,144,146,180-183,188-190,197,210,215-218,231,239,246,256,258-259,269-318,333-348,355,358-360,365-367,372-388,391-393,399-407,428
+src/app/docs/getting-started/page.tsx
+  s_a2df8e4be81ec1::t_7e21ce120f08fd 261
+  s_a2df8e4be81ec1::t_e345cb2bc6aeef 6-7,9,13-18,27-31,36-42,58,63,96,108,111-112,114-116,120,150,152,165,171,177-178,180,182-186,188-194,197-198,200-227,229-260,262-277,283,285,289-293,295-298,306-309,320
+  s_a2df8e4be81ec1::t_d3c348276e5ddc 2,43
+src/app/docs/changelog/page.tsx
+  s_a2df8e4be81ec1::t_c3c944e65d51e2 5-44,50-63,71-84,92-102,118,128,154
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.5.0",
+  "base_commit_sha": "5d4654fb37fcc56211adfb487bd02203835fdcc5",
+  "prompts": {},
+  "sessions": {
+    "s_a2df8e4be81ec1": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019e50f1-e1da-7c11-9565-6472d46d3509",
+        "model": "gpt-5.5"
+      },
+      "human_author": "igcodinap <igcodinap@users.noreply.github.com>"
+    }
+  }
+}
