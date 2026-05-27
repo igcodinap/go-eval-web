@@ -1,0 +1,21 @@
+src/app/page.tsx
+  s_44faa0fafdd292::t_46ce05cb65c16b 130,137,139
+src/app/docs/layout.tsx
+  s_44faa0fafdd292::t_46ce05cb65c16b 60
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.5.2",
+  "base_commit_sha": "232a84ad0b6578abdf30cb5a0d23c2322f0f6f24",
+  "prompts": {},
+  "sessions": {
+    "s_44faa0fafdd292": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019e6b26-9b19-7450-b24b-57ba74995eef",
+        "model": "gpt-5.5"
+      },
+      "human_author": "igcodinap <igcodinap@users.noreply.github.com>"
+    }
+  }
+}
