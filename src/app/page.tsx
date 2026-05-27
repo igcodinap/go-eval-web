@@ -127,16 +127,16 @@ export default function Home() {
   return (
     <div className="min-h-screen">
       <header className="sticky top-0 z-50 border-b border-[var(--border)] bg-[var(--header-bg)]">
-        <div className="mx-auto flex h-14 max-w-7xl items-center justify-between px-4 md:px-8">
+        <div className="mx-auto flex h-14 max-w-screen-2xl items-center justify-between px-4 md:px-8">
           <div className="flex min-w-0 items-center gap-6">
             <Link href="/" className="flex items-center gap-2">
               <Image src="/logo.png" alt="go-eval logo" width={28} height={28} className="rounded" />
               <span className="go-logo whitespace-nowrap text-lg font-bold">go-eval</span>
               <span className="text-xs text-[var(--muted)]">v0.8</span>
             </Link>
-            <nav className="hidden 2xl:flex items-center gap-1 text-sm">
+            <nav className="hidden shrink-0 items-center gap-1 text-sm 2xl:flex">
               {navItems.map((item) => (
-                <a key={item.label} href={item.href} className="px-3 py-2 text-[var(--secondary)] hover:text-[var(--foreground)] hover:no-underline">
+                <a key={item.label} href={item.href} className="whitespace-nowrap px-3 py-2 text-[var(--secondary)] hover:text-[var(--foreground)] hover:no-underline">
                   {item.label}
                 </a>
               ))}

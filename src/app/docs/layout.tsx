@@ -57,7 +57,7 @@ export default function DocsLayout({
   return (
     <div className="min-h-screen">
       <header className="sticky top-0 z-50 border-b border-[var(--border)] bg-[var(--header-bg)]">
-        <div className="mx-auto flex h-14 max-w-7xl items-center justify-between px-4 md:px-8">
+        <div className="mx-auto flex h-14 max-w-screen-2xl items-center justify-between px-4 md:px-8">
           <div className="flex min-w-0 items-center gap-6">
             <Link href="/" className="flex items-center gap-2">
               <Image src="/logo.png" alt="go-eval logo" width={28} height={28} className="rounded" />
