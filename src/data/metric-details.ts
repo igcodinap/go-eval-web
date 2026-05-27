@@ -99,7 +99,7 @@ export const metricDetails: Record<string, MetricDetail> = {
     name: "Compound",
     type: "judge",
     purpose: "Evaluate several related rubric dimensions in one judge call",
-    howItWorks: "The judge returns per-dimension scores and the metric fails when any thresholded dimension fails.",
+    howItWorks: "Requires a judge that implements RawJudge so it can score several rubric dimensions from one raw model response. The metric fails when any thresholded dimension fails.",
     threshold: "per-dimension",
     example: {
       code: `r.Run(t, eval.Compound{
@@ -194,11 +194,22 @@ export const metricDetails: Record<string, MetricDetail> = {
       output: pass("ArtifactExists", "artifact \"route\" exists"),
     },
   },
+  ArtifactNotExists: {
+    name: "ArtifactNotExists",
+    type: "deterministic",
+    purpose: "Assert that an unwanted structured artifact was not emitted",
+    howItWorks: "Looks up Case.Artifacts by key and passes only when the key is absent.",
+    threshold: "binary",
+    example: {
+      code: `r.Run(t, eval.ArtifactNotExists{Key: "unsafe_action"}, c)`,
+      output: pass("ArtifactNotExists", "artifact \"unsafe_action\" does not exist"),
+    },
+  },
   ArtifactJSONPath: {
     name: "ArtifactJSONPath",
     type: "deterministic",
     purpose: "Assert a JSON value inside a named artifact",
-    howItWorks: "Parses Case.Artifacts[Key], extracts Path, and compares the stringified JSON value to Expected.",
+    howItWorks: "Parses Case.Artifacts[Key], extracts Path, normalizes when configured, and compares the stringified JSON value to Expected.",
     threshold: "binary",
     example: {
       code: `r.Run(t, eval.ArtifactJSONPath{
@@ -237,13 +248,70 @@ export const metricDetails: Record<string, MetricDetail> = {
     name: "ArtifactArrayContains",
     type: "deterministic",
     purpose: "Check that an artifact array contains an expected value",
-    howItWorks: "Extracts an array from a named artifact and compares stringified JSON values.",
+    howItWorks: "Extracts an array from a named artifact and compares stringified JSON values, including wildcard paths such as stops[*].name.",
     threshold: "binary",
     example: {
       code: `r.Run(t, eval.ArtifactArrayContains{
 	Key: "route", Path: "stops", Expected: "Pajaritos",
 }, c)`,
       output: pass("ArtifactArrayContains", "array contained expected value"),
+    },
+  },
+  ArtifactArrayNotContains: {
+    name: "ArtifactArrayNotContains",
+    type: "deterministic",
+    purpose: "Check that an artifact array excludes an unwanted value",
+    howItWorks: "Extracts an array or wildcard path from a named artifact and fails if the excluded value appears.",
+    threshold: "binary",
+    example: {
+      code: `r.Run(t, eval.ArtifactArrayNotContains{
+	Key: "route", Path: "stops[*].name", Expected: "Aeropuerto",
+}, c)`,
+      output: pass("ArtifactArrayNotContains", "array excluded unwanted value"),
+    },
+  },
+  ArtifactArrayMinLen: {
+    name: "ArtifactArrayMinLen",
+    type: "deterministic",
+    purpose: "Require an artifact array to have at least a minimum length",
+    howItWorks: "Extracts an array from a named artifact path and compares its length to MinLen.",
+    threshold: "binary",
+    example: {
+      code: `r.Run(t, eval.ArtifactArrayMinLen{
+	Key: "route", Path: "stops", MinLen: 2,
+}, c)`,
+      output: pass("ArtifactArrayMinLen", "array length met minimum"),
+    },
+  },
+  ArtifactSubset: {
+    name: "ArtifactSubset",
+    type: "deterministic",
+    purpose: "Assert that an artifact contains a partial expected JSON structure",
+    howItWorks: "Parses Expected JSON and verifies it is an order-insensitive subset of the artifact value at Key/Path.",
+    threshold: "binary",
+    example: {
+      code: `r.Run(t, eval.ArtifactSubset{
+	Key:      "route",
+	Expected: json.RawMessage(\`{"status":"ready"}\`),
+}, c)`,
+      output: pass("ArtifactSubset", "artifact contained expected subset"),
+    },
+  },
+  Contract: {
+    name: "Contract",
+    type: "wrapper",
+    purpose: "Group several deterministic or judge checks into one named result",
+    howItWorks: "Runs each check, records per-check dimensions, and fails the contract when any check fails. StopOnFailure can short-circuit the group.",
+    threshold: "all checks",
+    example: {
+      code: `r.Run(t, eval.Contract{
+	ContractName: "ready_route",
+	Checks: []eval.Metric{
+		eval.ArtifactJSONPath{Key: "route", Path: "status", Expected: "ready"},
+		eval.ArtifactArrayMinLen{Key: "route", Path: "stops", MinLen: 2},
+	},
+}, c)`,
+      output: pass("Contract(ready_route)", "all checks passed"),
     },
   },
   ToolCallAccuracy: {
@@ -273,15 +341,29 @@ export const metricDetails: Record<string, MetricDetail> = {
       output: pass("ToolCallF1", "precision and recall met threshold"),
     },
   },
+  RequiredTools: {
+    name: "RequiredTools",
+    type: "trajectory",
+    purpose: "Fail when required tool names or name patterns are absent",
+    howItWorks: "Scans flattened tool calls from Case.Turns and checks exact Names plus glob-style Patterns.",
+    threshold: "binary",
+    example: {
+      code: `r.Run(t, eval.RequiredTools{
+	Patterns: []string{"orders.*"},
+}, c)`,
+      output: pass("RequiredTools", "all required tools used"),
+    },
+  },
   ForbiddenTool: {
     name: "ForbiddenTool",
     type: "trajectory",
-    purpose: "Fail when disallowed tool names appear in the trajectory",
-    howItWorks: "Scans flattened tool calls from Case.Turns for configured forbidden names.",
+    purpose: "Fail when disallowed tool names or patterns appear in the trajectory",
+    howItWorks: "Scans flattened tool calls from Case.Turns for exact Names or glob-style Patterns; Except exempts specific matches from pattern failures.",
     threshold: "binary",
     example: {
       code: `r.Run(t, eval.ForbiddenTool{
-	Names: []string{"orders.refund"},
+	Patterns: []string{"orders.*"},
+	Except:   []string{"orders.lookup"},
 }, c)`,
       output: pass("ForbiddenTool", "no forbidden tools used"),
     },
@@ -302,7 +384,7 @@ export const metricDetails: Record<string, MetricDetail> = {
     type: "wrapper",
     purpose: "Run a metric multiple times and aggregate pass rate plus score stats",
     howItWorks: "Repeat reruns a wrapped metric N times; RepeatN is the helper form that requires every run to pass.",
-    threshold: "pass rate 1.0",
+    threshold: "configurable pass rate",
     example: {
       code: `r.Run(t, eval.Repeat{
 	Metric:   eval.Faithfulness{Threshold: 0.8},
@@ -338,6 +420,20 @@ export const metricDetails: Record<string, MetricDetail> = {
 	eval.AnswerRelevancy{Threshold: 0.7},
 ), c)`,
       output: pass("WithLatencyBudget", "inner metric passed within latency budget"),
+    },
+  },
+  OutputLengthBudget: {
+    name: "OutputLengthBudget",
+    type: "deterministic",
+    purpose: "Keep final output within rune or word limits",
+    howItWorks: "Counts Case.Output runes and words deterministically, then fails when either configured limit is exceeded.",
+    threshold: "config",
+    example: {
+      code: `r.Run(t, eval.OutputLengthBudget{
+	MaxRunes: 1200,
+	MaxWords: 180,
+}, c)`,
+      output: pass("OutputLengthBudget", "output length within budget"),
     },
   },
 };

@@ -2,6 +2,40 @@ import Link from "next/link";
 
 const changelog = [
   {
+    version: "v0.8.0",
+    date: "2026-05-27",
+    status: "stable",
+    changes: [
+      {
+        category: "Added",
+        items: [
+          "Scenario ergonomics: ScenarioRepeat, scenario state passing, per-case/per-step timeouts, scenario summary JSONL rows, and GOEVAL_TIER filtering with WithTierFilter / DefaultTierFilter",
+          "Grouped deterministic checks with Contract",
+          "Tool pattern assertions on RequiredTools, ForbiddenTool, and scenario steps",
+          "Artifact and output helpers: ArtifactNotExists, ArtifactArrayNotContains, ArtifactSubset, and OutputLengthBudget",
+          "String normalizers for deterministic comparisons: CaseFoldNormalizer, SpanishASCIIFoldNormalizer, and ChainNormalizers",
+        ],
+      },
+    ],
+  },
+  {
+    version: "v0.7.0",
+    date: "2026-05-27",
+    status: "stable",
+    changes: [
+      {
+        category: "Added",
+        items: [
+          "Agent Scenario Contracts: Scenario, Step, StepRequest, StepFunc, StepResult, ScenarioResult, and Runner.RunScenario",
+          "Scenario-scoped ToolRegistry with NewToolRegistry validation",
+          "RequiredTools trajectory metric and ArtifactArrayMinLen artifact metric",
+          "Result sink redaction with WithRedactors, UUIDRedactor, and FieldRedactor",
+          "Agent scenario example covering multi-step route planning contracts",
+        ],
+      },
+    ],
+  },
+  {
     version: "v0.6.0",
     date: "2026-05-22",
     status: "stable",
@@ -97,7 +131,7 @@ const changelog = [
           "Judge and Metric interfaces",
           "Case and Result types",
           "Bench helper for benchmarking evals",
-          "JudgeMock for testing without an LLM",
+          "MockJudge for testing without an LLM",
         ],
       },
     ],

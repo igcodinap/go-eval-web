@@ -77,7 +77,7 @@ export interface ConceptDetail {
 export const conceptDetails: Record<string, ConceptDetail> = {
   Case: {
     term: "Case",
-    description: "Input, output, context, artifacts, trajectory data, and metadata for a single evaluation scenario.",
+    description: "Input, output, context, artifacts, trajectory data, metadata, and optional timeout for one evaluation case.",
     details: `The fundamental unit of evaluation. A Case represents one test scenario with:
 
 - \`Input\` — the question or prompt to evaluate
@@ -88,6 +88,7 @@ export const conceptDetails: Record<string, ConceptDetail> = {
 - \`Turns\` — typed conversation or agent trajectory steps
 - \`ExpectedToolCalls\` — expected tool calls used by trajectory metrics
 - \`Metadata\` — custom key-value data for filtering and reports
+- \`Timeout\` — per-case execution limit when this case needs a tighter or looser bound
 
 As of v0.4, external callers should use keyed struct literals such as \`eval.Case{Input: "..."}\`.`,
     example: {
@@ -109,7 +110,7 @@ As of v0.4, external callers should use keyed struct literals such as \`eval.Cas
 
 Artifact values are \`json.RawMessage\`, so the core package stays stdlib-only and does not interpret artifact names. Common keys include \`trace\`, \`tools\`, \`route\`, \`state\`, and \`budget\`.
 
-Use \`ArtifactExists\`, \`ArtifactJSONPath\`, \`ArtifactFieldCount\`, \`ArtifactNumberLTE\`, and \`ArtifactArrayContains\` for deterministic checks.`,
+Use \`ArtifactExists\`, \`ArtifactNotExists\`, \`ArtifactJSONPath\`, \`ArtifactFieldCount\`, \`ArtifactNumberLTE\`, \`ArtifactArrayContains\`, \`ArtifactArrayNotContains\`, \`ArtifactArrayMinLen\`, and \`ArtifactSubset\` for deterministic checks. v0.8 also supports wildcard artifact paths such as \`stops[*].name\` and normalizers for string comparisons.`,
     example: {
       code: `c := eval.Case{
 	Output: "Route is ready.",
@@ -130,7 +131,7 @@ r.Run(t, eval.ArtifactJSONPath{
 
 \`Turn\` stores role, content, optional speaker/tool labels, tool call IDs, tool calls, and metadata. \`ToolCall\` stores name, JSON arguments, result, error, IDs, and metadata.
 
-\`ToolCallAccuracy\` supports \`MatchStrict\`, \`MatchUnordered\`, \`MatchSubset\`, and \`MatchSuperset\`. \`ToolCallF1\`, \`ForbiddenTool\`, and \`StepBudget\` cover looser matching, policy gates, and tool-call budgets.`,
+\`ToolCallAccuracy\` supports \`MatchStrict\`, \`MatchUnordered\`, \`MatchSubset\`, and \`MatchSuperset\`. \`ToolCallF1\`, \`RequiredTools\`, \`ForbiddenTool\`, and \`StepBudget\` cover looser matching, required tool paths, policy gates, and tool-call budgets. v0.8 adds glob-style patterns for required and forbidden tool names.`,
     example: {
       code: `c := eval.Case{
 	Turns: []eval.Turn{
@@ -147,6 +148,55 @@ r.Run(t, eval.ArtifactJSONPath{
 r.Run(t, eval.ToolCallAccuracy{Mode: eval.MatchStrict, MatchArgs: true}, c)`,
     },
   },
+  Scenario: {
+    term: "Scenario",
+    description: "Ordered multi-step agent evaluation with accumulated history, artifacts, and state.",
+    details: `Use \`Runner.RunScenario\` when correctness depends on step order, tool policy, state passed between driver calls, or expected-failure steps.
+
+A \`Scenario\` has a name, tier, optional metadata, initial state, optional tool registry, a driver function, ordered \`Step\` values, and optional \`ScenarioRepeat\`. Each step can define required tools, forbidden tools, pattern policies, a max tool-call budget, checks, timeout, metadata, and \`ExpectFail\`.
+
+The driver receives \`StepRequest\` with accumulated history, artifacts, and state, then returns only the new output, turns, artifacts, metadata, and state for that step. Scenario runs can write a \`_scenario_summary\` JSONL row with step summaries, emitted artifact keys, failed metrics, and repeat pass rate.`,
+    example: {
+      code: `result := r.RunScenario(t, eval.Scenario{
+	Name:   "planning_to_route_ready",
+	Tier:   "critical",
+	State:  map[string]any{"locale": "es-CL"},
+	Repeat: eval.ScenarioRepeat{N: 3, PassRate: 2.0 / 3.0},
+	Driver: runAgentStep,
+	Steps: []eval.Step{
+		{Name: "greeting", Input: "Hola", ForbiddenToolPatterns: []string{"plan_*"}},
+		{
+			Name: "ready_route",
+			Input: "Propón la ruta",
+			RequiredToolPatterns: []string{"plan_*"},
+			Timeout: 3 * time.Second,
+			Checks: []eval.Metric{
+				eval.NewContract("ready_route",
+					eval.ArtifactJSONPath{Key: "route", Path: "status", Expected: "ready"},
+				),
+			},
+		},
+	},
+})`,
+    },
+  },
+  Contract: {
+    term: "Contract",
+    description: "A named group of checks that reports one pass/fail result with per-check dimensions.",
+    details: `\`Contract\` is useful when a step has several deterministic invariants that should read as one business-level requirement, such as "ready route" or "safe checkout".
+
+It runs each check, records the score/pass/reason for every check as dimensions, and fails if any check fails. Set \`StopOnFailure\` when later checks are noisy or less useful after the first broken invariant.`,
+    example: {
+      code: `eval.Contract{
+	ContractName: "ready_route",
+	Checks: []eval.Metric{
+		eval.ArtifactJSONPath{Key: "route", Path: "status", Expected: "ready"},
+		eval.ArtifactArrayMinLen{Key: "route", Path: "stops", MinLen: 2},
+		eval.OutputLengthBudget{MaxWords: 180},
+	},
+}`,
+    },
+  },
   CaseMetadata: {
     term: "Case Metadata",
     description: "Standard keys for categorizing and filtering evaluation cases.",
@@ -158,7 +208,7 @@ r.Run(t, eval.ToolCallAccuracy{Mode: eval.MatchStrict, MatchArgs: true}, c)`,
 | \`tier\` | string | Case selection tier: \`critical\`, \`standard\`, or \`extended\` |
 | \`dataset\` | string | Dataset name and version/provenance |
 
-Metadata is copied into JSONL results by \`Runner\`. Use \`WithCaseFilter\` to run only certain tiers.`,
+Metadata is copied into JSONL results by \`Runner\`. Use \`DefaultTierFilter\` to run selected tiers by \`GOEVAL_TIER\`, or \`WithCaseFilter\` for custom predicates.`,
     example: {
       code: `c := eval.Case{
 	Input:   "What's the capital of France?",
@@ -224,9 +274,9 @@ This pattern is ideal for:
 
 Available metrics:
 - **LLM-as-Judge**: Faithfulness, Hallucination, AnswerRelevancy, ContextPrecision, GEval, Compound
-- **Deterministic**: Contains, Regex, JSONPath, FieldCount, artifact metrics
-- **Trajectory**: ToolCallAccuracy, ToolCallF1, ForbiddenTool, StepBudget
-- **Wrappers**: Precheck, Repeat, WithTokenBudget, WithLatencyBudget
+- **Deterministic**: Contains, Regex, JSONPath, FieldCount, artifact metrics, OutputLengthBudget
+- **Trajectory**: ToolCallAccuracy, ToolCallF1, RequiredTools, ForbiddenTool, StepBudget
+- **Wrappers / groups**: Precheck, Repeat, Contract, WithTokenBudget, WithLatencyBudget
 
 Each metric has configurable parameters and a \`Threshold\` that determines pass/fail.`,
     example: {
@@ -250,7 +300,9 @@ Required method:
 
 The prompt is constructed by go-eval based on the metric and case. Your judge returns a score (0.0-1.0) and optional reasoning.
 
-go-eval provides helper judges like \`MockJudge\` for testing, or you can wrap any LLM provider (OpenAI, Anthropic, local, etc.).`,
+go-eval provides helper judges like \`MockJudge\` for testing, or you can wrap any LLM provider (OpenAI, Anthropic, local, etc.).
+
+\`RawJudge\` is an optional extension for metrics that need raw model text. \`Compound\` requires a judge that implements \`RawJudge\`; the OpenAI adapter implements both interfaces.`,
     example: {
       code: `type MyJudge struct {
 	client *openai.Client
@@ -280,6 +332,8 @@ Features:
 - Result aggregation and reporting
 - Benchmark support via \`eval.Bench\`
 - Optional ResultSink for JSONL persistence
+- Per-runner default timeout, per-case timeout, and per-step timeout
+- Optional \`DefaultTierFilter\` for \`GOEVAL_TIER\`-driven CI slices
 
 The Runner is safe to share across parallel tests via \`t.Parallel()\`.`,
     example: {
@@ -304,6 +358,36 @@ func TestRAG(t *testing.T) {
 	Metric:   eval.Faithfulness{Threshold: 0.8},
 	N:        3,
 	PassRate: 2.0 / 3.0,
+}, c)`,
+    },
+  },
+  TierFilter: {
+    term: "Tier Filter",
+    description: "Opt-in runner filter that uses GOEVAL_TIER to run critical, standard, or extended case slices.",
+    details: `v0.8 adds \`DefaultTierFilter()\`, which reads \`GOEVAL_TIER\` only when installed on the runner.
+
+This keeps normal behavior explicit: a runner without \`DefaultTierFilter()\` ignores \`GOEVAL_TIER\`. Multiple tiers are comma-separated, such as \`critical,standard\`. Use this for fast CI on critical cases and scheduled runs over the full suite.`,
+    example: {
+      code: `r := eval.NewRunner(judge, eval.DefaultTierFilter())
+
+// shell:
+// GOEVAL=1 GOEVAL_TIER=critical go test ./...`,
+    },
+  },
+  Normalizer: {
+    term: "Normalizer",
+    description: "String comparison hook for deterministic checks where case or accents should not matter.",
+    details: `Normalizers rewrite text before deterministic string comparison. v0.8 includes \`CaseFoldNormalizer\`, \`SpanishASCIIFoldNormalizer\`, and \`ChainNormalizers\`.
+
+Use them for artifact comparisons where the product behavior is correct even if casing or Spanish accents vary.`,
+    example: {
+      code: `fold := eval.ChainNormalizers(
+	eval.CaseFoldNormalizer(),
+	eval.SpanishASCIIFoldNormalizer(),
+)
+
+r.Run(t, eval.ArtifactArrayContains{
+	Key: "route", Path: "stops[*].name", Expected: "pajaritos", Normalizer: fold,
 }, c)`,
     },
   },

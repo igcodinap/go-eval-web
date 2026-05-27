@@ -31,6 +31,8 @@ const navGroups = [
     items: [
       { label: "Introduction", href: "/docs/getting-started#metrics-overview" },
       { label: "Deterministic", href: "/docs/getting-started#deterministic" },
+      { label: "Scenarios", href: "/docs/getting-started#scenarios" },
+      { label: "Contracts", href: "/docs/getting-started#contracts" },
       { label: "Artifacts", href: "/docs/getting-started#artifacts" },
       { label: "Trajectory", href: "/docs/getting-started#trajectory" },
       { label: "Repeat", href: "/docs/getting-started#repeat" },
@@ -39,6 +41,7 @@ const navGroups = [
   {
     title: "Results",
     items: [
+      { label: "Tier Filtering", href: "/docs/getting-started#tier-filtering" },
       { label: "JSONL Results", href: "/docs/getting-started#results" },
       { label: "CLI", href: "/docs/getting-started#cli" },
       { label: "Changelog", href: "/docs/changelog" },
@@ -55,10 +58,10 @@ export default function DocsLayout({
     <div className="min-h-screen">
       <header className="sticky top-0 z-50 border-b border-[var(--border)] bg-[var(--header-bg)]">
         <div className="mx-auto flex h-14 max-w-7xl items-center justify-between px-4 md:px-8">
-          <div className="flex items-center gap-6">
+          <div className="flex min-w-0 items-center gap-6">
             <Link href="/" className="flex items-center gap-2">
               <Image src="/logo.png" alt="go-eval logo" width={28} height={28} className="rounded" />
-              <span className="go-logo text-lg font-bold">go-eval</span>
+              <span className="go-logo whitespace-nowrap text-lg font-bold">go-eval</span>
               <span className="text-xs text-[var(--muted)]">Docs</span>
             </Link>
             <nav className="hidden md:flex items-center gap-1 text-sm">
@@ -70,7 +73,7 @@ export default function DocsLayout({
               </Link>
             </nav>
           </div>
-          <div className="flex items-center gap-3">
+          <div className="flex shrink-0 items-center gap-2 sm:gap-3">
             <a
               href="https://join.slack.com/t/goeval/shared_invite/zt-3vz9qlmpw-uBiyB_oZOFsjntlbP7l0EQ"
               target="_blank"
@@ -129,7 +132,7 @@ export default function DocsLayout({
       <footer className="border-t border-[var(--border)] bg-[var(--surface)]">
         <div className="mx-auto max-w-7xl px-4 py-6 md:px-8">
           <p className="text-sm text-[var(--muted)]">
-            go-eval v0.6 - MIT License -{" "}
+            go-eval v0.8 - MIT License -{" "}
             <a href="https://github.com/igcodinap/go-eval" className="text-[var(--accent)]">
               github.com/igcodinap/go-eval
             </a>

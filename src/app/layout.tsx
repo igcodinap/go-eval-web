@@ -5,7 +5,7 @@ import "./globals.css";
 export const metadata: Metadata = {
   title: "go-eval | LLM Evaluation Toolkit",
   description:
-    "Vendor-agnostic LLM evaluation toolkit with compound and deterministic metrics for production-grade quality checks.",
+    "Go-native LLM evaluation toolkit for go test with judge metrics, deterministic checks, artifacts, tool trajectories, and agent scenario contracts.",
 };
 
 const themeInitScript = `(() => {

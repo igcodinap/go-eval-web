@@ -21,6 +21,8 @@ const navItems = [
   { label: "Install", href: "#install" },
   { label: "Quick Start", href: "#quickstart" },
   { label: "Metrics", href: "#metrics" },
+  { label: "Scenarios", href: "#scenarios" },
+  { label: "Contracts", href: "#contracts" },
   { label: "Artifacts", href: "#artifacts" },
   { label: "Trajectory", href: "#trajectory" },
   { label: "Benchmarks", href: "#benchmarks" },
@@ -126,13 +128,13 @@ export default function Home() {
     <div className="min-h-screen">
       <header className="sticky top-0 z-50 border-b border-[var(--border)] bg-[var(--header-bg)]">
         <div className="mx-auto flex h-14 max-w-7xl items-center justify-between px-4 md:px-8">
-          <div className="flex items-center gap-6">
+          <div className="flex min-w-0 items-center gap-6">
             <Link href="/" className="flex items-center gap-2">
               <Image src="/logo.png" alt="go-eval logo" width={28} height={28} className="rounded" />
-              <span className="go-logo text-lg font-bold">go-eval</span>
-              <span className="text-xs text-[var(--muted)]">v0.6</span>
+              <span className="go-logo whitespace-nowrap text-lg font-bold">go-eval</span>
+              <span className="text-xs text-[var(--muted)]">v0.8</span>
             </Link>
-            <nav className="hidden md:flex items-center gap-1 text-sm">
+            <nav className="hidden 2xl:flex items-center gap-1 text-sm">
               {navItems.map((item) => (
                 <a key={item.label} href={item.href} className="px-3 py-2 text-[var(--secondary)] hover:text-[var(--foreground)] hover:no-underline">
                   {item.label}
@@ -140,8 +142,8 @@ export default function Home() {
               ))}
             </nav>
           </div>
-          <div className="flex items-center gap-3">
-            <Link href="/docs/changelog" className="text-xs text-[var(--muted)] hover:text-[var(--foreground)]">
+          <div className="flex shrink-0 items-center gap-2 sm:gap-3">
+            <Link href="/docs/changelog" className="hidden whitespace-nowrap text-xs text-[var(--muted)] hover:text-[var(--foreground)] sm:inline">
               Changelog
             </Link>
             <a href="https://join.slack.com/t/goeval/shared_invite/zt-3vz9qlmpw-uBiyB_oZOFsjntlbP7l0EQ" target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 text-sm text-[var(--secondary)] hover:text-[var(--foreground)]">
@@ -179,8 +181,20 @@ export default function Home() {
               <h1 className="mb-4 text-4xl font-bold">go-eval</h1>
               <p className="text-xl text-[var(--secondary)]">LLM evaluation for Go, inside standard <code>go test</code>.</p>
               <p className="mt-4 text-[var(--secondary)]">
-                v0.6 covers RAG-style judge metrics, deterministic JSON and artifact checks, typed tool trajectories, repeatability helpers, JSONL comparison and summaries, and optional judge adapters while keeping the core stdlib-only.
+                go-eval v0.8 combines LLM-as-judge metrics, deterministic JSON and artifact checks, typed tool trajectories, multi-step agent scenarios, grouped contracts, tiered CI slices, repeatability helpers, JSONL reporting, and optional judge adapters while keeping the core stdlib-only.
               </p>
+              <div className="mt-6 grid gap-3 md:grid-cols-3">
+                {[
+                  { label: "Go-native", desc: "Runs through testing.T, benchmarks, subtests, -parallel, and CI." },
+                  { label: "Agent-aware", desc: "Checks turns, tools, artifacts, scenario state, and step contracts." },
+                  { label: "Local-first", desc: "Opt-in eval gate, stdlib core, JSONL output, OpenAI or Ollama adapters." },
+                ].map((item) => (
+                  <div key={item.label} className="border border-[var(--border)] rounded-md bg-[var(--surface)] p-4">
+                    <h2 className="font-mono text-sm font-semibold text-[var(--accent)]">{item.label}</h2>
+                    <p className="mt-2 text-sm text-[var(--secondary)]">{item.desc}</p>
+                  </div>
+                ))}
+              </div>
             </section>
 
             <section id="install" className="mb-12 scroll-mt-20">
@@ -236,7 +250,7 @@ func TestRAGAnswer(t *testing.T) {
             <section id="metrics" className="mb-12 scroll-mt-20">
               <h2 className="mb-4 text-2xl font-semibold border-b border-[var(--border)] pb-2">Metrics</h2>
               <p className="mb-4 text-[var(--secondary)]">
-                v0.6 includes <span className="metric-tag judge">LLM-as-Judge</span>, <span className="metric-tag deterministic">Deterministic</span>, <span className="metric-tag trajectory">Trajectory</span>, and <span className="metric-tag wrapper">Wrapper</span> metrics. Click any metric for a focused example.
+                v0.8 includes <span className="metric-tag judge">LLM-as-Judge</span>, <span className="metric-tag deterministic">Deterministic</span>, <span className="metric-tag trajectory">Trajectory</span>, and <span className="metric-tag wrapper">Wrapper</span> metrics. Click any metric for a focused example.
               </p>
               <div className="overflow-x-auto">
                 <table className="w-full text-sm border-collapse">
@@ -266,24 +280,105 @@ func TestRAGAnswer(t *testing.T) {
               </div>
             </section>
 
+            <section id="scenarios" className="mb-12 scroll-mt-20">
+              <h2 className="mb-4 text-2xl font-semibold border-b border-[var(--border)] pb-2">Agent Scenarios</h2>
+              <p className="mb-4 text-[var(--secondary)]">
+                Use <code>RunScenario</code> for ordered multi-turn flows where each step can have its own input, tool policy, artifact contract, timeout, state, and repeat pass-rate requirement.
+              </p>
+              <pre className="bg-[var(--code-bg)] border border-[var(--border)] rounded-md px-4 py-3 font-mono text-sm overflow-x-auto">
+                <code>{`result := r.RunScenario(t, eval.Scenario{
+	Name:  "planning_to_route_ready",
+	Tier:  "critical",
+	State: map[string]any{"locale": "es-CL"},
+	Tools: eval.NewToolRegistry("plan_route", "select_map_items"),
+	Repeat: eval.ScenarioRepeat{N: 3, PassRate: 2.0 / 3.0},
+	Driver: func(ctx context.Context, req eval.StepRequest) (eval.StepResult, error) {
+		return runAgentStep(ctx, req.Step.Input, req.History, req.Artifacts, req.State)
+	},
+	Steps: []eval.Step{
+		{
+			Name: "greeting", Input: "Hola",
+			ForbiddenToolPatterns: []string{"plan_*", "select_*"},
+			Timeout: 500 * time.Millisecond,
+		},
+		{
+			Name: "ready_route_request", Input: "Propón la ruta",
+			RequiredToolPatterns: []string{"plan_*"},
+			Timeout: 3 * time.Second,
+			Checks: []eval.Metric{
+				eval.NewContract("ready_route",
+					eval.ArtifactJSONPath{Key: "route", Path: "status", Expected: "ready"},
+					eval.ArtifactArrayMinLen{Key: "route", Path: "stops", MinLen: 2},
+				),
+			},
+		},
+	},
+})
+
+if !result.Passed {
+	t.Fatalf("scenario failed")
+}`}</code>
+              </pre>
+              <p className="mt-3 text-sm text-[var(--muted)]">
+                Scenario runs write normal metric rows plus a <code>_scenario_summary</code> JSONL row when a result sink is configured.
+              </p>
+            </section>
+
+            <section id="contracts" className="mb-12 scroll-mt-20">
+              <h2 className="mb-4 text-2xl font-semibold border-b border-[var(--border)] pb-2">Grouped Contracts</h2>
+              <p className="mb-4 text-[var(--secondary)]">
+                <code>Contract</code> turns several low-level checks into one named product requirement with per-check dimensions. It is especially useful inside scenario steps.
+              </p>
+              <pre className="bg-[var(--code-bg)] border border-[var(--border)] rounded-md px-4 py-3 font-mono text-sm overflow-x-auto">
+                <code>{`readyRoute := eval.Contract{
+	ContractName: "ready_route",
+	Checks: []eval.Metric{
+		eval.ArtifactJSONPath{Key: "route", Path: "status", Expected: "ready"},
+		eval.ArtifactSubset{
+			Key:      "route",
+			Expected: json.RawMessage(\`{"success":true}\`),
+		},
+		eval.OutputLengthBudget{MaxWords: 180},
+	},
+}
+
+r.Run(t, readyRoute, c)`}</code>
+              </pre>
+            </section>
+
             <section id="artifacts" className="mb-12 scroll-mt-20">
               <h2 className="mb-4 text-2xl font-semibold border-b border-[var(--border)] pb-2">Artifact Checks</h2>
               <p className="mb-4 text-[var(--secondary)]">
-                <code>Case.Artifacts</code> stores named structured JSON outputs alongside text output. Use it for route state, planner state, budget data, tool traces, or other deterministic workflow checks.
+                <code>Case.Artifacts</code> stores named structured JSON outputs alongside text output. v0.8 adds absence checks, array exclusion, JSON subset checks, wildcard paths, output length budgets, and normalizers.
               </p>
               <pre className="bg-[var(--code-bg)] border border-[var(--border)] rounded-md px-4 py-3 font-mono text-sm overflow-x-auto">
                 <code>{`c := eval.Case{
 	Output: "Route is ready.",
 	Artifacts: map[string]json.RawMessage{
-		"route": json.RawMessage(\`{"status":"ready","total_minutes":98,"stops":["Pajaritos"]}\`),
+		"route": json.RawMessage(\`{
+			"status":"ready",
+			"total_minutes":98,
+			"stops":[{"name":"Pajaritos"},{"name":"Valparaíso"}]
+		}\`),
 	},
 }
+
+fold := eval.ChainNormalizers(
+	eval.CaseFoldNormalizer(),
+	eval.SpanishASCIIFoldNormalizer(),
+)
 
 r.Run(t, eval.ArtifactJSONPath{
 	Key: "route", Path: "status", Expected: "ready",
 }, c)
-r.Run(t, eval.ArtifactNumberLTE{
-	Key: "route", Path: "total_minutes", Max: 120,
+r.Run(t, eval.ArtifactArrayContains{
+	Key: "route", Path: "stops[*].name", Expected: "pajaritos", Normalizer: fold,
+}, c)
+r.Run(t, eval.ArtifactArrayNotContains{
+	Key: "route", Path: "stops[*].name", Expected: "Aeropuerto",
+}, c)
+r.Run(t, eval.ArtifactSubset{
+	Key: "route", Expected: json.RawMessage(\`{"status":"ready"}\`),
 }, c)`}</code>
               </pre>
             </section>
@@ -308,7 +403,8 @@ r.Run(t, eval.ArtifactNumberLTE{
 
 r.Run(t, eval.ToolCallAccuracy{Mode: eval.MatchStrict, MatchArgs: true}, c)
 r.Run(t, eval.ToolCallF1{MatchArgs: true, Threshold: 0.8}, c)
-r.Run(t, eval.ForbiddenTool{Names: []string{"orders.refund"}}, c)
+r.Run(t, eval.RequiredTools{Patterns: []string{"orders.*"}}, c)
+r.Run(t, eval.ForbiddenTool{Patterns: []string{"orders.refund*"}}, c)
 r.Run(t, eval.StepBudget{MaxSteps: 1}, c)`}</code>
               </pre>
               <p className="mt-3 text-sm text-[var(--muted)]">
@@ -352,10 +448,13 @@ r.Run(t, eval.StepBudget{MaxSteps: 1}, c)`}</code>
             <section id="cicd" className="mb-12 scroll-mt-20">
               <h2 className="mb-4 text-2xl font-semibold border-b border-[var(--border)] pb-2">CI/CD</h2>
               <p className="mb-4 text-[var(--secondary)]">
-                Persist JSONL results, compare baselines, summarize one run, and filter case tiers while keeping normal CI fast by default.
+                Persist JSONL results, compare baselines, summarize one run, redact sensitive metadata, and filter case tiers while keeping normal CI fast by default.
+              </p>
+              <p className="mb-4 text-sm text-[var(--muted)]">
+                Install <code>DefaultTierFilter</code> on the runner to use <code>GOEVAL_TIER</code>, and add <code>WithRedactors</code> before writing shared result logs.
               </p>
               <pre className="bg-[var(--code-bg)] border border-[var(--border)] rounded-md px-4 py-3 font-mono text-sm overflow-x-auto">
-                <code>{`GOEVAL=1 GOEVAL_RESULTS_DIR=.eval-results go test ./...
+                <code>{`GOEVAL=1 GOEVAL_TIER=critical GOEVAL_RESULTS_DIR=.eval-results go test ./...
 goeval compare old/results.jsonl new/results.jsonl
 goeval summarize .eval-results/results.jsonl`}</code>
               </pre>
@@ -364,6 +463,7 @@ goeval summarize .eval-results/results.jsonl`}</code>
                 <ul className="mt-2 space-y-1 text-[var(--secondary)]">
                   <li><code className="bg-[var(--code-bg)] px-1 py-0.5 rounded text-[var(--accent)]">GOEVAL=1</code> - Enable evaluations</li>
                   <li><code className="bg-[var(--code-bg)] px-1 py-0.5 rounded text-[var(--accent)]">GOEVAL_TRACE=1</code> - Log judge prompts and responses via <code>t.Log</code></li>
+                  <li><code className="bg-[var(--code-bg)] px-1 py-0.5 rounded text-[var(--accent)]">GOEVAL_TIER</code> - Filter tiers when <code>DefaultTierFilter</code> is installed</li>
                   <li><code className="bg-[var(--code-bg)] px-1 py-0.5 rounded text-[var(--accent)]">GOEVAL_RESULTS_DIR</code> - Write <code>results.jsonl</code> in this directory</li>
                 </ul>
               </div>
@@ -396,12 +496,16 @@ goeval summarize .eval-results/results.jsonl`}</code>
               <h2 className="mb-4 text-2xl font-semibold border-b border-[var(--border)] pb-2">Core Concepts</h2>
               <div className="grid gap-4 md:grid-cols-2">
                 {[
-                  { term: "Case", desc: "Input, output, expected value, context, artifacts, turns, expected tool calls, and metadata." },
+                  { term: "Case", desc: "Input, output, expected value, context, artifacts, turns, expected tool calls, metadata, and timeout." },
+                  { term: "Scenario", desc: "Ordered multi-step agent flow with history, artifacts, state, tools, and repeats." },
+                  { term: "Contract", desc: "A named group of checks reported as one business-level pass/fail result." },
                   { term: "Artifacts", desc: "Named structured JSON outputs for deterministic workflow checks." },
                   { term: "Trajectory", desc: "Typed turns and tool calls for agent path evaluation." },
                   { term: "Metric", desc: "A stateless scoring function with thresholded pass/fail behavior." },
                   { term: "Precheck", desc: "Conditional wrapper that gates expensive metrics behind cheap checks." },
                   { term: "Repeat", desc: "Wrapper for repeated runs, pass-rate aggregation, and score variance." },
+                  { term: "TierFilter", desc: "GOEVAL_TIER-driven case slicing when DefaultTierFilter is installed." },
+                  { term: "Normalizer", desc: "String comparison hook for deterministic checks where case or accents vary." },
                   { term: "Judge", desc: "Concurrency-safe LLM-as-judge implementation returning scores and reasons." },
                   { term: "Runner", desc: "Executes cases with metrics, handles GOEVAL gating, assertions, and result sinks." },
                   { term: "CaseMetadata", desc: "Standard keys such as flow, tier, and dataset for filtering and reports." },
@@ -425,7 +529,7 @@ goeval summarize .eval-results/results.jsonl`}</code>
       <footer className="border-t border-[var(--border)] bg-[var(--surface)]">
         <div className="mx-auto max-w-7xl px-4 py-6 md:px-8">
           <p className="text-sm text-[var(--muted)]">
-            go-eval v0.6 - MIT License -{" "}
+            go-eval v0.8 - MIT License -{" "}
             <a href="https://github.com/igcodinap/go-eval" className="text-[var(--accent)]">github.com/igcodinap/go-eval</a>
           </p>
         </div>

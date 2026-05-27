@@ -11,15 +11,19 @@ const patterns = [
   },
   {
     title: "Trajectory Checks",
-    body: "Use Turns, ToolCalls, ExpectedToolCalls, and match modes for agent tool-use workflows.",
+    body: "Use Turns, ToolCalls, ExpectedToolCalls, match modes, required tools, and forbidden tool patterns for agent paths.",
+  },
+  {
+    title: "Scenario Contracts",
+    body: "Use RunScenario when step order, state, accumulated artifacts, expected failures, or per-step tool policy matters.",
   },
   {
     title: "Repeatability",
-    body: "Use Repeat or RepeatN when judge nondeterminism needs a pass-rate guard instead of a single sample.",
+    body: "Use Repeat, RepeatN, or ScenarioRepeat when nondeterminism needs a pass-rate guard instead of one sample.",
   },
   {
-    title: "Budgets",
-    body: "Wrap metrics with token and latency budgets when cost or runtime is part of the quality bar.",
+    title: "Budgets & Tiers",
+    body: "Use token, latency, output length, per-step timeouts, and DefaultTierFilter for practical CI slices.",
   },
   {
     title: "CI-safe by Default",
@@ -38,7 +42,7 @@ export default function AgentSkillsPage() {
 
       <h1 className="mb-4 text-4xl font-bold">Agent Skills</h1>
       <p className="text-lg text-[var(--secondary)] leading-relaxed">
-        Guides for coding agents that need to author, run, or review go-eval v0.6 suites.
+        Guides for coding agents that need to author, run, or review go-eval v0.8 suites.
       </p>
 
       <div className="mt-8 grid gap-6 md:grid-cols-2">
@@ -76,7 +80,7 @@ export default function AgentSkillsPage() {
       </div>
 
       <section className="mt-8 p-4 border border-[var(--border)] rounded-md bg-[var(--surface)]">
-        <h2 className="text-sm font-semibold text-[var(--muted)] uppercase tracking-wide mb-3">Key v0.6 Patterns</h2>
+        <h2 className="text-sm font-semibold text-[var(--muted)] uppercase tracking-wide mb-3">Key v0.8 Patterns</h2>
         <div className="grid gap-4 md:grid-cols-3">
           {patterns.map((pattern) => (
             <div key={pattern.title}>
