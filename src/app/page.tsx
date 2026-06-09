@@ -33,6 +33,8 @@ const navItems = [
   { label: "Concepts", href: "#concepts" },
 ];
 
+const headerNavItems = navItems.slice(0, 7);
+
 const metricTypeLabels: Record<MetricDetail["type"], string> = {
   judge: "LLM-as-Judge",
   deterministic: "Deterministic",
@@ -136,8 +138,8 @@ export default function Home() {
               <span className="go-logo whitespace-nowrap text-lg font-bold">go-eval</span>
               <span className="text-xs text-[var(--muted)]">v0.9</span>
             </Link>
-            <nav className="hidden shrink-0 items-center gap-1 text-sm 2xl:flex">
-              {navItems.map((item) => (
+            <nav className="hidden min-w-0 shrink items-center gap-1 text-sm 2xl:flex">
+              {headerNavItems.map((item) => (
                 <a key={item.label} href={item.href} className="whitespace-nowrap px-3 py-2 text-[var(--secondary)] hover:text-[var(--foreground)] hover:no-underline">
                   {item.label}
                 </a>
