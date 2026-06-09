@@ -16,6 +16,7 @@ const navGroups = [
     items: [
       { label: "Quick Introduction", href: "/docs/getting-started" },
       { label: "Use Cases", href: "/docs/getting-started#use-cases" },
+      { label: "Implementation Example", href: "/docs/implementation-example" },
     ],
   },
   {

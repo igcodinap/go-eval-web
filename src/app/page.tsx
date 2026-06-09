@@ -20,6 +20,7 @@ const navItems = [
   { label: "Overview", href: "#overview" },
   { label: "Install", href: "#install" },
   { label: "Quick Start", href: "#quickstart" },
+  { label: "Implementation", href: "#implementation" },
   { label: "Metrics", href: "#metrics" },
   { label: "Scenarios", href: "#scenarios" },
   { label: "Contracts", href: "#contracts" },
@@ -246,6 +247,28 @@ func TestRAGAnswer(t *testing.T) {
                   Without <code className="bg-[var(--code-bg)] px-1 py-0.5 rounded text-[var(--accent)]">GOEVAL=1</code>, eval runs skip. Use <code className="bg-[var(--code-bg)] px-1 py-0.5 rounded text-[var(--accent)]">GOEVAL_TRACE=1</code> only when you need prompt and response logs.
                 </p>
               </div>
+            </section>
+
+            <section id="implementation" className="mb-12 scroll-mt-20">
+              <h2 className="mb-4 text-2xl font-semibold border-b border-[var(--border)] pb-2">Implementation Example</h2>
+              <p className="mb-4 text-[var(--secondary)]">
+                See how a Go API can wire go-eval into an agent workflow. The travel-planning example covers a <code>goeval.json</code> profile, shared runner options, redacted JSONL results, route artifact contracts, custom metrics, scenario state, tool policies, and compare gates.
+              </p>
+              <div className="grid gap-3 md:grid-cols-3">
+                {[
+                  { label: "Profile", desc: "Run critical integration evals with prerequisites and policy settings." },
+                  { label: "Contract", desc: "Validate route artifacts before judging final assistant prose." },
+                  { label: "Scenario", desc: "Exercise a multi-step trip-planning agent with required and forbidden tools." },
+                ].map((item) => (
+                  <div key={item.label} className="border border-[var(--border)] rounded-md bg-[var(--surface)] p-4">
+                    <h3 className="font-mono text-sm font-semibold text-[var(--accent)]">{item.label}</h3>
+                    <p className="mt-2 text-sm text-[var(--secondary)]">{item.desc}</p>
+                  </div>
+                ))}
+              </div>
+              <Link href="/docs/implementation-example" className="mt-4 inline-block text-sm font-medium text-[var(--accent)] hover:underline">
+                Open the full implementation example
+              </Link>
             </section>
 
             <section id="metrics" className="mb-12 scroll-mt-20">
