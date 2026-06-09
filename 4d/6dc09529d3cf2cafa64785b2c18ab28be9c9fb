@@ -1,0 +1,25 @@
+src/app/page.tsx
+  s_92fc56466f89f2::t_244f3e505d25e3 23,252-254,256-271
+  s_92fc56466f89f2::t_4bfe1c6b505901 255
+src/app/docs/layout.tsx
+  s_92fc56466f89f2::t_0c37093944ab04 19
+src/app/docs/implementation-example/page.tsx
+  s_92fc56466f89f2::t_9d4fc884bc16f2 1-7,9-35,38,40-116,119-120,123-124,126-127,129,131-132,138-171,173-202,204-219,221-222,225-253,255-288
+  s_92fc56466f89f2::t_847b6c35eead75 8,36-37,39,117-118,121-122,125,128,130,133-137,172,203,220,223-224,254
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.5.6",
+  "base_commit_sha": "4d6dc09529d3cf2cafa64785b2c18ab28be9c9fb",
+  "prompts": {},
+  "sessions": {
+    "s_92fc56466f89f2": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019eac6e-8a5f-7331-a40e-fd0a3cdc2020",
+        "model": "gpt-5.5"
+      },
+      "human_author": "igcodinap <igcodinap@users.noreply.github.com>"
+    }
+  }
+}
