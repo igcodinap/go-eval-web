@@ -1,0 +1,37 @@
+src/app/docs/changelog/page.tsx
+  s_92fc56466f89f2::t_4a4cc0973c9b33 5-27
+src/data/benchmark-concept-details.ts
+  s_92fc56466f89f2::t_65a735956c4314 377-378,398-399,412-413,424-425,434-435
+  s_92fc56466f89f2::t_7bb130fe5dbe1f 113,134,367,451
+  s_92fc56466f89f2::t_11d665714d73db 379-397,400-411,414-423,426-433,436-447
+src/app/docs/getting-started/page.tsx
+  s_92fc56466f89f2::t_fa68011d4e43d7 24-25,426
+  s_92fc56466f89f2::t_5e7cbb9c1f74b5 40,275
+  s_92fc56466f89f2::t_ada3e3e88a7839 371
+  s_92fc56466f89f2::t_bfed47fc821e10 10,12,78,372-413,417,424-425,427,430,443-445,456,469-472,482-483
+src/app/docs/layout.tsx
+  s_92fc56466f89f2::t_0b0076791c1ff7 45,136
+src/app/page.tsx
+  s_92fc56466f89f2::t_1a797adabc258f 449,564-568
+  s_92fc56466f89f2::t_1575ac27188253 500
+  s_92fc56466f89f2::t_b49f80d10c4cad 136,185,191,254,450-499,501-504,508,511,514-516,532,536-538,594
+  s_92fc56466f89f2::t_842ae1260e29e2 29,353
+src/app/docs/agent-skills/page.tsx
+  s_92fc56466f89f2::t_0dd6ca747e2e44 25-27,49,87
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.5.6",
+  "base_commit_sha": "ea7dc7df02a232cee95f1632ce5c2b112065a5a5",
+  "prompts": {},
+  "sessions": {
+    "s_92fc56466f89f2": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019eac6e-8a5f-7331-a40e-fd0a3cdc2020",
+        "model": "gpt-5.5"
+      },
+      "human_author": "igcodinap <igcodinap@users.noreply.github.com>"
+    }
+  }
+}
