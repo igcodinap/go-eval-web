@@ -1,0 +1,19 @@
+src/app/page.tsx
+  s_92fc56466f89f2::t_a1de9a0d0492fe 36-37,141-142
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.5.6",
+  "base_commit_sha": "02260f45480f1fbf2da7f3f16112d25e2712b94a",
+  "prompts": {},
+  "sessions": {
+    "s_92fc56466f89f2": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019eac6e-8a5f-7331-a40e-fd0a3cdc2020",
+        "model": "gpt-5.5"
+      },
+      "human_author": "igcodinap <igcodinap@users.noreply.github.com>"
+    }
+  }
+}
