@@ -2,6 +2,30 @@ import Link from "next/link";
 
 const changelog = [
   {
+    version: "v0.9.0",
+    date: "2026-06-09",
+    status: "stable",
+    changes: [
+      {
+        category: "Added",
+        items: [
+          "Eval operations layer with goeval.json profiles, manifest prerequisites, goeval test --profile, and --config support",
+          "Prerequisite helpers: Require, Env, File, TCP, and Func",
+          "Compare policies with per-metric/per-tier score tolerances, case ID matching, JSON output, and goeval compare policy flags",
+          "Reliability summaries with pass rates, p95 latency/tokens, metadata grouping, flaky identity detection, and scenario run totals",
+          "Policy-aware summary APIs and goeval summarize policy flags for case ID identity and flaky-score thresholds",
+          "compare.StableCaseIDFromMetadata for case ID and metric matching across test renames",
+        ],
+      },
+      {
+        category: "Changed",
+        items: [
+          "goeval summarize text output now includes tier, flow, dataset, case, and flaky identity rows in addition to metric rows",
+        ],
+      },
+    ],
+  },
+  {
     version: "v0.8.0",
     date: "2026-05-27",
     status: "stable",

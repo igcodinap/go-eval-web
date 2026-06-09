@@ -7,8 +7,9 @@ const useCases = [
   "Agent trajectory checks for tool-use workflows",
   "Ordered agent scenario contracts with per-step tool policies",
   "Tiered CI slices for critical, standard, and extended cases",
+  "Profile-driven eval runs for PR, nightly, provider, and release gates",
   "Prompt or model regression checks in CI pipelines",
-  "Repeatability checks for flaky judge metrics",
+  "Policy-aware summaries and repeatability checks for flaky judge metrics",
 ];
 
 const concepts = [
@@ -20,6 +21,8 @@ const concepts = [
   { term: "Runner", desc: "Executes Cases with Metrics and handles GOEVAL gating, result sinks, and assertions." },
   { term: "Artifact", desc: "Named structured JSON output checked deterministically." },
   { term: "Trajectory", desc: "Typed turns, required tools, forbidden tools, and expected tool calls." },
+  { term: "Eval Profiles", desc: "goeval.json run profiles for packages, tiers, result directories, and prerequisites." },
+  { term: "Compare Policies", desc: "Baseline policies for score tolerances, stable case identity, and regression gates." },
 ];
 
 const docsSections = [
@@ -34,6 +37,7 @@ const docsSections = [
   { id: "trajectory", title: "Trajectory" },
   { id: "tier-filtering", title: "Tier Filtering" },
   { id: "repeat", title: "Repeat" },
+  { id: "eval-ops", title: "Eval Operations" },
   { id: "results", title: "Results" },
   { id: "cli", title: "CLI" },
   { id: "ci-cd", title: "CI/CD" },
@@ -71,7 +75,7 @@ export default function GettingStartedPage() {
 
       <h1 className="mb-4 text-4xl font-bold">Getting Started</h1>
       <p className="text-lg text-[var(--secondary)] leading-relaxed">
-        go-eval v0.8 is an open-source evaluation toolkit for Go teams building LLM products. It runs inside <code>go test</code>, stays opt-in through <code>GOEVAL=1</code>, and covers judge metrics, deterministic checks, structured artifacts, tool trajectories, multi-step agent scenarios, result comparison, and summaries.
+        go-eval v0.9 is an open-source evaluation toolkit for Go teams building LLM products. It runs inside <code>go test</code>, stays opt-in through <code>GOEVAL=1</code>, and covers judge metrics, deterministic checks, structured artifacts, tool trajectories, multi-step agent scenarios, profile-driven eval operations, result comparison, and policy-aware reliability summaries.
       </p>
 
       <nav className="mt-6 flex flex-wrap gap-2 text-sm">
@@ -268,7 +272,7 @@ r.Run(t, readyRoute, c)`}</code>
       <section id="artifacts" className="mt-12 scroll-mt-20">
         <h2 className="mb-4 text-2xl font-semibold border-b border-[var(--border)] pb-2">Artifact Checks</h2>
         <p className="text-[var(--secondary)]">
-          Use <code>Case.Artifacts</code> for named JSON payloads that should be validated separately from final prose: route state, planner output, budget data, tool traces, or workflow state. v0.8 adds absence checks, array exclusion, JSON subsets, wildcard paths, output length budgets, and normalizers.
+          Use <code>Case.Artifacts</code> for named JSON payloads that should be validated separately from final prose: route state, planner output, budget data, tool traces, or workflow state. Artifact checks include absence checks, array exclusion, JSON subsets, wildcard paths, output length budgets, and normalizers.
         </p>
         <pre className="mt-4 bg-[var(--code-bg)] border border-[var(--border)] rounded-md px-4 py-3 font-mono text-sm overflow-x-auto">
           <code>{`c := eval.Case{
@@ -364,21 +368,66 @@ r.Run(t, eval.WithLatencyBudget(2*time.Second, eval.AnswerRelevancy{Threshold: 0
         </pre>
       </section>
 
+      <section id="eval-ops" className="mt-12 scroll-mt-20">
+        <h2 className="mb-4 text-2xl font-semibold border-b border-[var(--border)] pb-2">Eval Operations</h2>
+        <p className="text-[var(--secondary)]">
+          Use <code>goeval.json</code> when a repo has different eval run shapes for PRs, nightly runs, provider-specific checks, or release gates. Profiles set <code>GOEVAL=1</code>, optional tiers, result directories, and prerequisites before delegating to <code>go test</code>.
+        </p>
+        <pre className="mt-4 bg-[var(--code-bg)] border border-[var(--border)] rounded-md px-4 py-3 font-mono text-sm overflow-x-auto">
+          <code>{`{
+  "profiles": {
+    "pr": {
+      "packages": ["./..."],
+      "tiers": ["critical"],
+      "results_dir": ".goeval/pr"
+    },
+    "google": {
+      "packages": ["./..."],
+      "tiers": ["critical", "standard"],
+      "results_dir": ".goeval/google",
+      "prerequisites": [
+        {"type": "env", "name": "GEMINI_API_KEY"},
+        {"type": "env", "name": "GOOGLE_ROUTES_API_KEY"}
+      ],
+      "missing_prerequisite": "skip"
+    }
+  },
+  "compare": {
+    "case_id_key": "case_id",
+    "default": {
+      "score_tolerance": 0.02,
+      "fail_on_missing": true,
+      "fail_on_regression": true
+    }
+  }
+}`}</code>
+        </pre>
+        <pre className="mt-4 bg-[var(--code-bg)] border border-[var(--border)] rounded-md px-4 py-3 font-mono text-sm overflow-x-auto">
+          <code>{`goeval test --profile pr
+goeval test --profile google --config goeval.json -run Route`}</code>
+        </pre>
+        <p className="mt-3 text-sm text-[var(--muted)]">
+          Test code can also declare direct prerequisites with <code>eval.Require</code>, <code>eval.Env</code>, <code>eval.File</code>, <code>eval.TCP</code>, and <code>eval.Func</code>.
+        </p>
+      </section>
+
       <section id="results" className="mt-12 scroll-mt-20">
         <h2 className="mb-4 text-2xl font-semibold border-b border-[var(--border)] pb-2">Save And Compare Results</h2>
         <p className="text-[var(--secondary)]">
-          Add a result sink to persist JSONL rows. v0.8 can compare two result files, summarize one result file, and write scenario summary rows for multi-step runs. Use <code>WithRedactors</code> when reasons or metadata may contain sensitive IDs.
+          Add a result sink to persist JSONL rows. v0.9 can compare two result files with policy tolerances, summarize reliability from one result file, match stable case IDs across test renames, and write scenario summary rows for multi-step runs. Use <code>WithRedactors</code> when reasons or metadata may contain sensitive IDs.
         </p>
         <pre className="mt-4 bg-[var(--code-bg)] border border-[var(--border)] rounded-md px-4 py-3 font-mono text-sm overflow-x-auto">
           <code>{`r := eval.NewRunner(judge, eval.WithResultSink(eval.DefaultResultSink()))`}</code>
         </pre>
         <pre className="mt-4 bg-[var(--code-bg)] border border-[var(--border)] rounded-md px-4 py-3 font-mono text-sm overflow-x-auto">
           <code>{`GOEVAL=1 GOEVAL_RESULTS_DIR=.eval-results go test ./...
-goeval compare old/results.jsonl new/results.jsonl
-goeval summarize .eval-results/results.jsonl`}</code>
+goeval compare --policy goeval.json --format json old/results.jsonl new/results.jsonl
+goeval compare --case-id-key case_id --score-tolerance 0.02 old.jsonl new.jsonl
+goeval compare --fail-on-regression=false old.jsonl new.jsonl
+goeval summarize --policy goeval.json .eval-results/results.jsonl`}</code>
         </pre>
         <p className="mt-3 text-sm text-[var(--muted)]">
-          Use <code>compare.CaseIDFromMetadata</code> when the conventional <code>Case.Metadata[&quot;case_id&quot;]</code> key should identify rows across runs.
+          Use <code>compare.StableCaseIDFromMetadata</code>, or a compare policy <code>case_id_key</code>, when the conventional <code>Case.Metadata[&quot;case_id&quot;]</code> key should identify rows across test renames.
         </p>
       </section>
 
@@ -391,8 +440,9 @@ goeval summarize .eval-results/results.jsonl`}</code>
           <code>{`go install github.com/igcodinap/go-eval/cmd/goeval@latest
 
 goeval test ./...
-goeval compare old/results.jsonl new/results.jsonl
-goeval summarize current/results.jsonl
+goeval test --profile pr
+goeval compare --policy goeval.json old/results.jsonl new/results.jsonl
+goeval summarize --policy goeval.json current/results.jsonl
 goeval version`}</code>
         </pre>
       </section>
@@ -403,7 +453,7 @@ goeval version`}</code>
           Enable evaluations explicitly with <code className="bg-[var(--code-bg)] px-1.5 py-0.5 rounded text-[var(--accent)]">GOEVAL=1</code>. Without it, evals skip and normal test runs stay fast.
         </p>
         <p className="mt-3 text-[var(--secondary)]">
-          Install <code>DefaultTierFilter</code> on the runner when CI should select tiers with <code>GOEVAL_TIER</code>.
+          Install <code>DefaultTierFilter</code> on the runner when CI should select tiers with <code>GOEVAL_TIER</code>, or let a <code>goeval.json</code> profile set the tier and result directory for each pipeline shape.
         </p>
         <pre className="mt-4 bg-[var(--code-bg)] border border-[var(--border)] rounded-md px-4 py-3 font-mono text-sm overflow-x-auto">
           <code>{`# Enable evals
@@ -416,7 +466,10 @@ GOEVAL=1 GOEVAL_RESULTS_DIR=.eval-results go test ./...
 GOEVAL=1 GOEVAL_TRACE=1 go test -v ./...
 
 # Critical tier only
-GOEVAL=1 GOEVAL_TIER=critical go test ./...`}</code>
+GOEVAL=1 GOEVAL_TIER=critical go test ./...
+
+# Named PR profile
+goeval test --profile pr`}</code>
         </pre>
       </section>
 
@@ -426,6 +479,8 @@ GOEVAL=1 GOEVAL_TIER=critical go test ./...`}</code>
           {[
             { q: "Evals are skipped unexpectedly", a: "Confirm GOEVAL=1 is set before running tests." },
             { q: "Trace output is missing", a: "Use both GOEVAL=1 and GOEVAL_TRACE=1, and run tests with -v so t.Log output is visible." },
+            { q: "A profile skips instead of running", a: "Check goeval.json prerequisites. Missing prerequisites skip by default unless the profile sets missing_prerequisite to fail." },
+            { q: "Comparisons drift after test renames", a: "Set a stable metadata case_id and compare with --case-id-key case_id or compare.StableCaseIDFromMetadata." },
             { q: "Judge calls fail intermittently", a: "Verify credentials, rate limits, and model availability. Use deterministic prechecks to reduce judge call volume." },
             { q: "Need detailed API reference", a: "Use package docs: go doc github.com/igcodinap/go-eval" },
           ].map((item) => (

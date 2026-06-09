@@ -110,7 +110,7 @@ As of v0.4, external callers should use keyed struct literals such as \`eval.Cas
 
 Artifact values are \`json.RawMessage\`, so the core package stays stdlib-only and does not interpret artifact names. Common keys include \`trace\`, \`tools\`, \`route\`, \`state\`, and \`budget\`.
 
-Use \`ArtifactExists\`, \`ArtifactNotExists\`, \`ArtifactJSONPath\`, \`ArtifactFieldCount\`, \`ArtifactNumberLTE\`, \`ArtifactArrayContains\`, \`ArtifactArrayNotContains\`, \`ArtifactArrayMinLen\`, and \`ArtifactSubset\` for deterministic checks. v0.8 also supports wildcard artifact paths such as \`stops[*].name\` and normalizers for string comparisons.`,
+Use \`ArtifactExists\`, \`ArtifactNotExists\`, \`ArtifactJSONPath\`, \`ArtifactFieldCount\`, \`ArtifactNumberLTE\`, \`ArtifactArrayContains\`, \`ArtifactArrayNotContains\`, \`ArtifactArrayMinLen\`, and \`ArtifactSubset\` for deterministic checks. Artifact checks support wildcard paths such as \`stops[*].name\` and normalizers for string comparisons.`,
     example: {
       code: `c := eval.Case{
 	Output: "Route is ready.",
@@ -131,7 +131,7 @@ r.Run(t, eval.ArtifactJSONPath{
 
 \`Turn\` stores role, content, optional speaker/tool labels, tool call IDs, tool calls, and metadata. \`ToolCall\` stores name, JSON arguments, result, error, IDs, and metadata.
 
-\`ToolCallAccuracy\` supports \`MatchStrict\`, \`MatchUnordered\`, \`MatchSubset\`, and \`MatchSuperset\`. \`ToolCallF1\`, \`RequiredTools\`, \`ForbiddenTool\`, and \`StepBudget\` cover looser matching, required tool paths, policy gates, and tool-call budgets. v0.8 adds glob-style patterns for required and forbidden tool names.`,
+\`ToolCallAccuracy\` supports \`MatchStrict\`, \`MatchUnordered\`, \`MatchSubset\`, and \`MatchSuperset\`. \`ToolCallF1\`, \`RequiredTools\`, \`ForbiddenTool\`, and \`StepBudget\` cover looser matching, required tool paths, policy gates, and tool-call budgets. Required and forbidden tool checks also support glob-style patterns.`,
     example: {
       code: `c := eval.Case{
 	Turns: []eval.Turn{
@@ -364,7 +364,7 @@ func TestRAG(t *testing.T) {
   TierFilter: {
     term: "Tier Filter",
     description: "Opt-in runner filter that uses GOEVAL_TIER to run critical, standard, or extended case slices.",
-    details: `v0.8 adds \`DefaultTierFilter()\`, which reads \`GOEVAL_TIER\` only when installed on the runner.
+    details: `\`DefaultTierFilter()\` reads \`GOEVAL_TIER\` only when installed on the runner.
 
 This keeps normal behavior explicit: a runner without \`DefaultTierFilter()\` ignores \`GOEVAL_TIER\`. Multiple tiers are comma-separated, such as \`critical,standard\`. Use this for fast CI on critical cases and scheduled runs over the full suite.`,
     example: {
@@ -374,10 +374,81 @@ This keeps normal behavior explicit: a runner without \`DefaultTierFilter()\` ig
 // GOEVAL=1 GOEVAL_TIER=critical go test ./...`,
     },
   },
+  "Eval Profiles": {
+    term: "Eval Profiles",
+    description: "A goeval.json run shape for packages, tiers, result directories, and prerequisites.",
+    details: `v0.9 adds profile-aware eval operations through \`goeval.json\`. A profile can name packages, tiers, a result directory, and prerequisites for a specific run shape.
+
+Use profiles for PR smoke checks, nightly broader suites, provider-specific evals, and release gates. \`goeval test --profile\` sets \`GOEVAL=1\`, applies profile tier and result settings, checks prerequisites, then delegates to \`go test\`.`,
+    example: {
+      code: `{
+  "profiles": {
+    "pr": {
+      "packages": ["./..."],
+      "tiers": ["critical"],
+      "results_dir": ".goeval/pr"
+    }
+  }
+}
+
+// shell:
+// goeval test --profile pr`,
+    },
+  },
+  "Prerequisite Checks": {
+    term: "Prerequisite Checks",
+    description: "A required env var, file, TCP endpoint, or custom check before an eval profile runs.",
+    details: `Prerequisites keep expensive or provider-specific eval suites honest about what they need. Profiles can declare manifest prerequisites, and tests can call \`eval.Require\` directly.
+
+Missing manifest prerequisites skip the profile by default. Set \`"missing_prerequisite": "fail"\` for release-style gates where missing credentials or services should fail the run.`,
+    example: {
+      code: `eval.Require(t,
+	eval.Env("GEMINI_API_KEY"),
+	eval.File("testdata/routes.json"),
+	eval.TCP("local routing db", "127.0.0.1:5432"),
+)`,
+    },
+  },
+  "Compare Policies": {
+    term: "Compare Policies",
+    description: "Policy for score tolerances, stable identity, JSON output, and regression behavior.",
+    details: `Compare policies can live in \`goeval.json\` or a standalone policy file. They define case identity, score tolerances, and whether missing rows or regressions fail the command.
+
+Use per-metric or per-tier tolerances when different parts of a suite have different noise budgets. Use JSON output when CI or dashboards need machine-readable regression details.`,
+    example: {
+      code: `goeval compare --policy goeval.json --format json old/results.jsonl new/results.jsonl
+goeval compare --case-id-key case_id --score-tolerance 0.02 old.jsonl new.jsonl
+goeval compare --fail-on-regression=false old.jsonl new.jsonl`,
+    },
+  },
+  "Reliability Summaries": {
+    term: "Reliability Summaries",
+    description: "Pass rates, p95 latency/tokens, metadata groups, scenario totals, and flaky identities.",
+    details: `v0.9 summaries go beyond metric means. Summary APIs and \`goeval summarize\` can report pass rates, p95 latency and token usage, tier/flow/dataset/case groupings, scenario run totals, and repeated-case identities that look flaky.
+
+Use summary policies when the same identity and flaky-score thresholds should apply across compare and summarize workflows.`,
+    example: {
+      code: `goeval summarize --policy goeval.json .goeval/pr/results.jsonl`,
+    },
+  },
+  "Stable Case IDs": {
+    term: "Stable Case IDs",
+    description: "Case metadata identity that survives test renames across result comparisons.",
+    details: `Default comparisons match rows by test name and metric. v0.9 adds \`compare.StableCaseIDFromMetadata\` for suites that store stable IDs in metadata and need results to keep matching after test names move or change.
+
+The conventional key is \`Case.Metadata["case_id"]\`, but policies can choose a different \`case_id_key\`. Rows without the metadata key fall back to test name and metric.`,
+    example: {
+      code: `report := compare.CompareWithOptions(
+	baseline,
+	current,
+	compare.Options{Identity: compare.StableCaseIDFromMetadata("")},
+)`,
+    },
+  },
   Normalizer: {
     term: "Normalizer",
     description: "String comparison hook for deterministic checks where case or accents should not matter.",
-    details: `Normalizers rewrite text before deterministic string comparison. v0.8 includes \`CaseFoldNormalizer\`, \`SpanishASCIIFoldNormalizer\`, and \`ChainNormalizers\`.
+    details: `Normalizers rewrite text before deterministic string comparison. Built-in normalizers include \`CaseFoldNormalizer\`, \`SpanishASCIIFoldNormalizer\`, and \`ChainNormalizers\`.
 
 Use them for artifact comparisons where the product behavior is correct even if casing or Spanish accents vary.`,
     example: {
