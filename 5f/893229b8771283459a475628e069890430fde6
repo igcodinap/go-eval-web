@@ -1,0 +1,56 @@
+src/app/docs/changelog/page.tsx
+  s_cd535a32ee7235::t_30510438d2e5fd 5-34
+src/app/docs/implementation-example/page.tsx
+  s_cd535a32ee7235::t_7f2be21a885f70 170
+src/data/metric-details.ts
+  s_cd535a32ee7235::t_f81a1b87d6d09a 475,477
+  s_cd535a32ee7235::t_1552f0cdfbb7d4 473-474,476,478-494,496,498-509
+  s_cd535a32ee7235::t_10cddfe9697e3e 84-174
+  s_cd535a32ee7235::t_cbdb63dff5d0d5 495,497
+src/app/docs/layout.tsx
+  s_cd535a32ee7235::t_0c874c786ae7f1 140
+  s_cd535a32ee7235::t_cd826b5a92a61d 39,49-50
+src/data/benchmark-concept-details.ts
+  s_cd535a32ee7235::t_72ef4ee1285c52 335,338
+  s_cd535a32ee7235::t_91e6b93ed2d1ac 467-558
+  s_cd535a32ee7235::t_76b9934ec38c6f 276-277
+src/app/page.tsx
+  s_cd535a32ee7235::t_4ed7e871dc3577 142
+  s_cd535a32ee7235::t_84227260169f89 444-478
+  s_cd535a32ee7235::t_63f22158809e25 568-591
+  s_cd535a32ee7235::t_5cde0a8f75bc1d 191
+  s_cd535a32ee7235::t_bdfc5378d13fcc 515
+  s_cd535a32ee7235::t_af280bed5ebbb9 352
+  s_cd535a32ee7235::t_07971343e6560e 196-197
+  s_cd535a32ee7235::t_7ebe44ef7e3376 637-650
+  s_cd535a32ee7235::t_e15be10bcbe1bc 616-636,651-652
+  s_cd535a32ee7235::t_fb7cf5c4a5b82e 663-664
+  s_cd535a32ee7235::t_541c3710f852ed 682,687,695-697
+  s_cd535a32ee7235::t_1d7c86927a4cca 29,32,34
+  s_cd535a32ee7235::t_52b4a208209945 724
+src/app/docs/getting-started/page.tsx
+  s_cd535a32ee7235::t_5ae53a5802e2f2 477-516,531-532
+  s_cd535a32ee7235::t_d83bd50c051d1e 43,48-49
+  s_cd535a32ee7235::t_19fa1e613cdde6 19,27,30
+  s_cd535a32ee7235::t_4d5eab8d6b2068 86
+  s_cd535a32ee7235::t_77301890c0bd70 517-530
+  s_cd535a32ee7235::t_a9806fa6ec9dd7 345-379
+  s_cd535a32ee7235::t_e60e7fe648cea6 8,13-14
+  s_cd535a32ee7235::t_56156be16965e3 545-546
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.5.6",
+  "base_commit_sha": "5f893229b8771283459a475628e069890430fde6",
+  "prompts": {},
+  "sessions": {
+    "s_cd535a32ee7235": {
+      "agent_id": {
+        "tool": "opencode",
+        "id": "ses_14e10a87cffelej3h4rlS7YqrH",
+        "model": "qwen3.7-max"
+      },
+      "human_author": "igcodinap <igcodinap@users.noreply.github.com>"
+    }
+  }
+}
