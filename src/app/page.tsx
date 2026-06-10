@@ -26,9 +26,12 @@ const navItems = [
   { label: "Contracts", href: "#contracts" },
   { label: "Artifacts", href: "#artifacts" },
   { label: "Trajectory", href: "#trajectory" },
+  { label: "Traces", href: "#traces" },
   { label: "Benchmarks", href: "#benchmarks" },
   { label: "Eval Operations", href: "#eval-ops" },
+  { label: "Reports", href: "#reports" },
   { label: "CI/CD", href: "#cicd" },
+  { label: "Adapters", href: "#adapters" },
   { label: "CLI", href: "#cli" },
   { label: "Concepts", href: "#concepts" },
 ];
@@ -136,7 +139,7 @@ export default function Home() {
             <Link href="/" className="flex items-center gap-2">
               <Image src="/logo.png" alt="go-eval logo" width={28} height={28} className="rounded" />
               <span className="go-logo whitespace-nowrap text-lg font-bold">go-eval</span>
-              <span className="text-xs text-[var(--muted)]">v0.9</span>
+              <span className="text-xs text-[var(--muted)]">v1.0</span>
             </Link>
             <nav className="hidden min-w-0 shrink items-center gap-1 text-sm 2xl:flex">
               {headerNavItems.map((item) => (
@@ -185,13 +188,13 @@ export default function Home() {
               <h1 className="mb-4 text-4xl font-bold">go-eval</h1>
               <p className="text-xl text-[var(--secondary)]">LLM evaluation for Go, inside standard <code>go test</code>.</p>
               <p className="mt-4 text-[var(--secondary)]">
-                go-eval v0.9 combines LLM-as-judge metrics, deterministic JSON and artifact checks, typed tool trajectories, multi-step agent scenarios, grouped contracts, tiered CI slices, repeatability helpers, policy-aware summaries, baseline comparison, and profile-driven eval operations while keeping the core stdlib-only.
+                go-eval v1.0 combines LLM-as-judge metrics, deterministic JSON and artifact checks, typed tool trajectories, structured agent traces, multi-step agent scenarios, grouped contracts, tiered CI slices, repeatability helpers, policy-aware summaries, baseline comparison, static reports, judge calibration, and profile-driven eval operations while keeping the core stdlib-only.
               </p>
               <div className="mt-6 grid gap-3 md:grid-cols-3">
                 {[
                   { label: "Go-native", desc: "Runs through testing.T, benchmarks, subtests, -parallel, and CI." },
-                  { label: "Agent-aware", desc: "Checks turns, tools, artifacts, scenario state, and step contracts." },
-                  { label: "Ops-ready", desc: "Profiles, prerequisites, compare policies, summaries, and JSONL output." },
+                  { label: "Agent-aware", desc: "Checks turns, tools, artifacts, traces, scenario state, and step contracts." },
+                  { label: "Ops-ready", desc: "Profiles, prerequisites, compare policies, reports, calibration, and JSONL output." },
                 ].map((item) => (
                   <div key={item.label} className="border border-[var(--border)] rounded-md bg-[var(--surface)] p-4">
                     <h2 className="font-mono text-sm font-semibold text-[var(--accent)]">{item.label}</h2>
@@ -346,7 +349,7 @@ if !result.Passed {
 }`}</code>
               </pre>
               <p className="mt-3 text-sm text-[var(--muted)]">
-                Scenario runs write normal metric rows plus a <code>_scenario_summary</code> JSONL row when a result sink is configured.
+                Scenario runs write normal metric rows plus a <code>_scenario_summary</code> JSONL row when a result sink is configured. Use <code>LoadScenarios</code> and <code>BindScenarioDrivers</code> to define scenarios in JSON while keeping drivers in Go.
               </p>
             </section>
 
@@ -438,6 +441,41 @@ r.Run(t, eval.StepBudget{MaxSteps: 1}, c)`}</code>
               </p>
             </section>
 
+            <section id="traces" className="mb-12 scroll-mt-20">
+              <h2 className="mb-4 text-2xl font-semibold border-b border-[var(--border)] pb-2">Structured Traces</h2>
+              <p className="mb-4 text-[var(--secondary)]">
+                Use <code>Case.Trace</code> when your agent can emit structured spans, tool calls, artifact records, or state deltas. Trace IDs link metric rows, scenario summaries, and trace records in downstream reports.
+              </p>
+              <pre className="bg-[var(--code-bg)] border border-[var(--border)] rounded-md px-4 py-3 font-mono text-sm overflow-x-auto">
+                <code>{`r := eval.NewRunner(
+	judge,
+	eval.WithResultSink(eval.DefaultResultSink()),
+	eval.WithTraceSink(eval.DefaultTraceSink()),
+)
+
+c := eval.Case{
+	Input:   "Find a route and charge the card",
+	Output:  answer,
+	TraceID: "route-42",
+	Trace: &eval.Trace{
+		ID:   "route-42",
+		Name: "checkout_route",
+		Spans: []eval.Span{{
+			Name: "charge",
+			Kind: "tool_call",
+			ToolCall: &eval.ToolCall{
+				Name:      "payments.charge",
+				Arguments: json.RawMessage(\`{"amount":42}\`),
+			},
+		}},
+	},
+}`}</code>
+              </pre>
+              <p className="mt-3 text-sm text-[var(--muted)]">
+                When <code>GOEVAL_RESULTS_DIR</code> is set, <code>DefaultTraceSink</code> writes <code>traces.jsonl</code> alongside <code>results.jsonl</code>. Trace writes use the same <code>WithRedactors</code> hooks as result JSONL.
+              </p>
+            </section>
+
             <section id="benchmarks" className="mb-12 scroll-mt-20">
               <h2 className="mb-4 text-2xl font-semibold border-b border-[var(--border)] pb-2">Benchmarks</h2>
               <p className="mb-4 text-[var(--secondary)]">
@@ -474,7 +512,7 @@ r.Run(t, eval.StepBudget{MaxSteps: 1}, c)`}</code>
             <section id="eval-ops" className="mb-12 scroll-mt-20">
               <h2 className="mb-4 text-2xl font-semibold border-b border-[var(--border)] pb-2">Eval Operations</h2>
               <p className="mb-4 text-[var(--secondary)]">
-                v0.9 adds an operations layer for repeatable eval runs: define <code>goeval.json</code> profiles, preflight prerequisites, run profile-aware tests, and apply the same policy to compare and summarize commands.
+                v1.0 adds an operations layer for repeatable eval runs: define <code>goeval.json</code> profiles, preflight prerequisites, run profile-aware tests, and apply the same policy to compare and summarize commands.
               </p>
               <div className="mb-4 grid gap-3 md:grid-cols-2">
                 {[
@@ -527,6 +565,30 @@ goeval summarize --policy goeval.json new/results.jsonl`}</code>
               </pre>
             </section>
 
+            <section id="reports" className="mb-12 scroll-mt-20">
+              <h2 className="mb-4 text-2xl font-semibold border-b border-[var(--border)] pb-2">Reports And Calibration</h2>
+              <p className="mb-4 text-[var(--secondary)]">
+                Render static HTML, Markdown, or JSON reports from JSONL result files. Use calibration to analyze judge disagreement and compare A/B variants.
+              </p>
+              <div className="mb-4 grid gap-3 md:grid-cols-2">
+                {[
+                  { label: "Static Reports", desc: "Render HTML, Markdown, or JSON reports from one or two result files." },
+                  { label: "Judge Calibration", desc: "Analyze judge disagreement, aggregate duplicate rows, and compare A/B variants." },
+                ].map((item) => (
+                  <div key={item.label} className="border border-[var(--border)] rounded-md bg-[var(--surface)] p-4">
+                    <h3 className="font-mono text-sm font-semibold text-[var(--accent)]">{item.label}</h3>
+                    <p className="mt-2 text-sm text-[var(--secondary)]">{item.desc}</p>
+                  </div>
+                ))}
+              </div>
+              <pre className="bg-[var(--code-bg)] border border-[var(--border)] rounded-md px-4 py-3 font-mono text-sm overflow-x-auto">
+                <code>{`goeval report current/results.jsonl --out report.html
+goeval report --baseline old/results.jsonl --current new/results.jsonl --format markdown
+goeval calibrate --case-id-key case_id --judge-key judge current/results.jsonl
+goeval calibrate --pairwise-key variant results.jsonl`}</code>
+              </pre>
+            </section>
+
             <section id="cicd" className="mb-12 scroll-mt-20">
               <h2 className="mb-4 text-2xl font-semibold border-b border-[var(--border)] pb-2">CI/CD</h2>
               <p className="mb-4 text-[var(--secondary)]">
@@ -551,6 +613,43 @@ goeval summarize --policy goeval.json .goeval/pr/results.jsonl`}</code>
               </div>
             </section>
 
+            <section id="adapters" className="mb-12 scroll-mt-20">
+              <h2 className="mb-4 text-2xl font-semibold border-b border-[var(--border)] pb-2">Judge Adapters</h2>
+              <p className="mb-4 text-[var(--secondary)]">
+                Optional judge adapters live in separate modules so the core package stays stdlib-only. Use the Ollama adapter for local LLM-as-judge scoring, or the OpenAI adapter for cloud-based evaluation.
+              </p>
+              <pre className="bg-[var(--code-bg)] border border-[var(--border)] rounded-md px-4 py-3 font-mono text-sm overflow-x-auto">
+                <code>{`go get github.com/igcodinap/go-eval/adapters/ollama
+go get github.com/igcodinap/go-eval/adapters/openai github.com/sashabaranov/go-openai`}</code>
+              </pre>
+              <pre className="mt-4 bg-[var(--code-bg)] border border-[var(--border)] rounded-md px-4 py-3 font-mono text-sm overflow-x-auto">
+                <code>{`import ollamaeval "github.com/igcodinap/go-eval/adapters/ollama"
+
+judge := ollamaeval.NewJudge("llama3.2")
+r := eval.NewRunner(judge)
+
+r.Run(t, eval.Faithfulness{Threshold: 0.8}, eval.Case{
+	Input:   "What is the capital of France?",
+	Output:  "Paris is the capital of France.",
+	Context: []string{"Paris is the capital of France."},
+})`}</code>
+              </pre>
+              <p className="mt-4 text-[var(--secondary)]">
+                You can also implement your own <code>Judge</code> by wrapping any LLM provider:
+              </p>
+              <pre className="mt-4 bg-[var(--code-bg)] border border-[var(--border)] rounded-md px-4 py-3 font-mono text-sm overflow-x-auto">
+                <code>{`type MyJudge struct{}
+
+func (j *MyJudge) Evaluate(ctx context.Context, prompt string) (eval.JudgeResponse, error) {
+	// 1. Send prompt to an LLM.
+	// 2. Parse its JSON {"score": float, "reason": string} response.
+	// 3. Return eval.JudgeResponse{Score, Reason, Tokens}.
+	// Must be safe for concurrent use.
+	return eval.JudgeResponse{}, nil
+}`}</code>
+              </pre>
+            </section>
+
             <section id="cli" className="mb-12 scroll-mt-20">
               <h2 className="mb-4 text-2xl font-semibold border-b border-[var(--border)] pb-2">CLI</h2>
               <p className="mb-4 text-[var(--secondary)]">
@@ -561,6 +660,8 @@ goeval summarize --policy goeval.json .goeval/pr/results.jsonl`}</code>
                   { cmd: "goeval test --profile pr", desc: "Run a named goeval.json profile with GOEVAL=1, tier filters, result directories, and prerequisites applied." },
                   { cmd: "goeval compare --policy goeval.json old/results.jsonl new/results.jsonl", desc: "Compare baseline and current JSONL results with policy tolerances, case IDs, and regression rules." },
                   { cmd: "goeval summarize --policy goeval.json current/results.jsonl", desc: "Summarize pass rates, p95 latency/tokens, metadata groups, scenario totals, and flaky identities." },
+                  { cmd: "goeval report current/results.jsonl --out report.html", desc: "Render static HTML, Markdown, or JSON reports from JSONL result files." },
+                  { cmd: "goeval calibrate --judge-key judge current/results.jsonl", desc: "Analyze judge disagreement, aggregate duplicate rows, and compare A/B variants." },
                   { cmd: "goeval version", desc: "Print CLI version information." },
                 ].map((item) => (
                   <div key={item.cmd} className="border border-[var(--border)] rounded-md p-4 bg-[var(--surface)]">
@@ -578,11 +679,12 @@ goeval summarize --policy goeval.json .goeval/pr/results.jsonl`}</code>
               <h2 className="mb-4 text-2xl font-semibold border-b border-[var(--border)] pb-2">Core Concepts</h2>
               <div className="grid gap-4 md:grid-cols-2">
                 {[
-                  { term: "Case", desc: "Input, output, expected value, context, artifacts, turns, expected tool calls, metadata, and timeout." },
+                  { term: "Case", desc: "Input, output, expected value, context, artifacts, turns, traces, expected tool calls, metadata, and timeout." },
                   { term: "Scenario", desc: "Ordered multi-step agent flow with history, artifacts, state, tools, and repeats." },
                   { term: "Contract", desc: "A named group of checks reported as one business-level pass/fail result." },
                   { term: "Artifacts", desc: "Named structured JSON outputs for deterministic workflow checks." },
                   { term: "Trajectory", desc: "Typed turns and tool calls for agent path evaluation." },
+                  { term: "Trace", desc: "Structured agent execution with spans, tool calls, artifact records, and state deltas." },
                   { term: "Metric", desc: "A stateless scoring function with thresholded pass/fail behavior." },
                   { term: "Precheck", desc: "Conditional wrapper that gates expensive metrics behind cheap checks." },
                   { term: "Repeat", desc: "Wrapper for repeated runs, pass-rate aggregation, and score variance." },
@@ -590,6 +692,9 @@ goeval summarize --policy goeval.json .goeval/pr/results.jsonl`}</code>
                   { term: "Prerequisite Checks", desc: "Env, file, TCP, or custom checks that can skip or fail a profile before go test runs." },
                   { term: "Compare Policies", desc: "Policies for score tolerance, stable identity, and regression behavior." },
                   { term: "Reliability Summaries", desc: "Pass rates, p95 latency/tokens, scenario totals, metadata groups, and flaky identities." },
+                  { term: "Reports", desc: "Static HTML, Markdown, or JSON evaluation reports from JSONL result files." },
+                  { term: "Calibration", desc: "Judge disagreement analysis and A/B variant comparison for eval reliability." },
+                  { term: "Scenario Datasets", desc: "Portable JSON scenario definitions with named drivers bound in Go." },
                   { term: "Stable Case IDs", desc: "Case metadata identities that survive test renames across result comparisons." },
                   { term: "TierFilter", desc: "GOEVAL_TIER-driven case slicing when DefaultTierFilter is installed." },
                   { term: "Normalizer", desc: "String comparison hook for deterministic checks where case or accents vary." },
@@ -616,7 +721,7 @@ goeval summarize --policy goeval.json .goeval/pr/results.jsonl`}</code>
       <footer className="border-t border-[var(--border)] bg-[var(--surface)]">
         <div className="mx-auto max-w-7xl px-4 py-6 md:px-8">
           <p className="text-sm text-[var(--muted)]">
-            go-eval v0.9 - MIT License -{" "}
+            go-eval v1.0 - MIT License -{" "}
             <a href="https://github.com/igcodinap/go-eval" className="text-[var(--accent)]">github.com/igcodinap/go-eval</a>
           </p>
         </div>

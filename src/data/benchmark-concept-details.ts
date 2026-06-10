@@ -273,8 +273,8 @@ This pattern is ideal for:
     details: `The evaluation function. Metrics implement the \`Metric\` interface and return a \`Result\` with score, pass/fail, and reasoning.
 
 Available metrics:
-- **LLM-as-Judge**: Faithfulness, Hallucination, AnswerRelevancy, ContextPrecision, GEval, Compound
-- **Deterministic**: Contains, Regex, JSONPath, FieldCount, artifact metrics, OutputLengthBudget
+- **LLM-as-Judge**: Faithfulness, Hallucination, AnswerRelevancy, ContextPrecision, ContextRecall, AnswerCorrectness, NoiseSensitivity, TaskCompletion, PlanAdherence, GEval, Compound
+- **Deterministic**: Contains, Regex, JSONPath, FieldCount, artifact metrics, OutputLengthBudget, ToolArgumentAccuracy, StepEfficiency
 - **Trajectory**: ToolCallAccuracy, ToolCallF1, RequiredTools, ForbiddenTool, StepBudget
 - **Wrappers / groups**: Precheck, Repeat, Contract, WithTokenBudget, WithLatencyBudget
 
@@ -332,8 +332,10 @@ Features:
 - Result aggregation and reporting
 - Benchmark support via \`eval.Bench\`
 - Optional ResultSink for JSONL persistence
+- Optional TraceSink for structured trace JSONL persistence
 - Per-runner default timeout, per-case timeout, and per-step timeout
 - Optional \`DefaultTierFilter\` for \`GOEVAL_TIER\`-driven CI slices
+- Redaction hooks via \`WithRedactors\` for result and trace sinks
 
 The Runner is safe to share across parallel tests via \`t.Parallel()\`.`,
     example: {
@@ -460,6 +462,98 @@ Use them for artifact comparisons where the product behavior is correct even if 
 r.Run(t, eval.ArtifactArrayContains{
 	Key: "route", Path: "stops[*].name", Expected: "pajaritos", Normalizer: fold,
 }, c)`,
+    },
+  },
+  Trace: {
+    term: "Trace",
+    description: "Structured agent trace model with spans, tool calls, artifact records, and state deltas.",
+    details: `v1.0 introduces a structured trace model that captures the full execution path of an agent.
+
+\`Case.Trace\` holds a \`Trace\` with an ID, name, and ordered \`Span\` values. Each span can record tool calls, artifact writes, or state changes. \`Case.TraceID\` and \`Result.TraceID\` link metric rows, scenario summaries, and trace records in downstream reports.
+
+When both \`Case.TraceID\` and \`Case.Trace.ID\` are set, the trace's own ID is authoritative. Tool-call metrics and scenario tool contracts read trace tool-call spans when present, falling back to \`Case.Turns\` for legacy evals.`,
+    example: {
+      code: `c := eval.Case{
+	Input:   "Find a route and charge the card",
+	Output:  answer,
+	TraceID: "route-42",
+	Trace: &eval.Trace{
+		ID:   "route-42",
+		Name: "checkout_route",
+		Spans: []eval.Span{{
+			Name: "charge",
+			Kind: "tool_call",
+			ToolCall: &eval.ToolCall{
+				Name:      "payments.charge",
+				Arguments: json.RawMessage(\`{"amount":42}\`),
+			},
+		}},
+	},
+}`,
+    },
+  },
+  TraceSink: {
+    term: "Trace Sink",
+    description: "Persistence layer for structured traces, writing traces.jsonl alongside results.",
+    details: `Use \`WithTraceSink\` and \`DefaultTraceSink\` to persist structured trace records as JSONL. When \`GOEVAL_RESULTS_DIR\` is set, \`DefaultTraceSink\` writes \`traces.jsonl\` in that directory.
+
+Trace writes use the same \`WithRedactors\` hooks as result JSONL, scrubbing sensitive data from span text, tool-call strings, trace metadata, artifact records, and state deltas. A shared \`Runner\` writes each non-empty trace ID to its trace sink at most once.`,
+    example: {
+      code: `r := eval.NewRunner(
+	judge,
+	eval.WithResultSink(eval.DefaultResultSink()),
+	eval.WithTraceSink(eval.DefaultTraceSink()),
+)`,
+    },
+  },
+  "Scenario Datasets": {
+    term: "Scenario Datasets",
+    description: "Portable JSON scenario definitions with named drivers bound in Go.",
+    details: `v1.0 adds \`LoadScenarios\`, \`DecodeScenarios\`, and \`BindScenarioDrivers\` for defining multi-step agent scenarios in JSON while keeping drivers app-owned.
+
+JSON scenarios declare name, tier, tools, repeat settings, and ordered steps with required/forbidden tool patterns, artifact keys, and max tool calls. Drivers are bound by name in Go before running.
+
+This pattern lets product teams author scenario definitions without touching Go test code, while engineering teams own the driver implementations.`,
+    example: {
+      code: `scenarios, err := eval.LoadScenarios("testdata/scenarios.json")
+if err != nil {
+	t.Fatal(err)
+}
+scenarios, err = eval.BindScenarioDrivers(scenarios, map[string]eval.StepFunc{
+	"route_agent": runRouteAgentStep,
+})
+if err != nil {
+	t.Fatal(err)
+}
+for _, s := range scenarios {
+	r.RunScenario(t, s)
+}`,
+    },
+  },
+  Reports: {
+    term: "Reports",
+    description: "Static HTML, Markdown, or JSON evaluation reports from JSONL result files.",
+    details: `Use \`goeval report\` or the \`compare\` package APIs (\`ReportHTML\`, \`ReportMarkdown\`, \`ReportJSON\`) to render static reports from JSONL result files.
+
+Reports include metric scores, pass/fail status, token usage, latency, and optional baseline comparisons. When \`--format\` is omitted, \`--out\` must use \`.html\`, \`.htm\`, \`.md\`, \`.markdown\`, or \`.json\`.
+
+Use reports for CI artifacts, review summaries, or stakeholder dashboards without requiring a hosted platform.`,
+    example: {
+      code: `goeval report current/results.jsonl --out report.html
+goeval report --baseline old/results.jsonl --current new/results.jsonl --format markdown`,
+    },
+  },
+  Calibration: {
+    term: "Calibration",
+    description: "Judge disagreement analysis and A/B variant comparison for eval reliability.",
+    details: `Use \`goeval calibrate\` or \`compare.Calibrate\` / \`compare.CalibrateFile\` to analyze judge reliability across repeated runs.
+
+Calibration expects repeated rows with judge names in metadata, reports judge disagreement, aggregates duplicate judge/variant rows by mean score, and can compare A/B variants with \`--pairwise-key variant\`.
+
+Use calibration to detect flaky judges, compare model variants, or validate that a new judge implementation agrees with the existing one.`,
+    example: {
+      code: `goeval calibrate --case-id-key case_id --judge-key judge current/results.jsonl
+goeval calibrate --pairwise-key variant results.jsonl`,
     },
   },
 };

@@ -36,6 +36,7 @@ const navGroups = [
       { label: "Contracts", href: "/docs/getting-started#contracts" },
       { label: "Artifacts", href: "/docs/getting-started#artifacts" },
       { label: "Trajectory", href: "/docs/getting-started#trajectory" },
+      { label: "Traces", href: "/docs/getting-started#traces" },
       { label: "Repeat", href: "/docs/getting-started#repeat" },
     ],
   },
@@ -45,6 +46,8 @@ const navGroups = [
       { label: "Tier Filtering", href: "/docs/getting-started#tier-filtering" },
       { label: "Eval Operations", href: "/docs/getting-started#eval-ops" },
       { label: "JSONL Results", href: "/docs/getting-started#results" },
+      { label: "Reports", href: "/docs/getting-started#reports" },
+      { label: "Adapters", href: "/docs/getting-started#adapters" },
       { label: "CLI", href: "/docs/getting-started#cli" },
       { label: "Changelog", href: "/docs/changelog" },
     ],
@@ -134,7 +137,7 @@ export default function DocsLayout({
       <footer className="border-t border-[var(--border)] bg-[var(--surface)]">
         <div className="mx-auto max-w-7xl px-4 py-6 md:px-8">
           <p className="text-sm text-[var(--muted)]">
-            go-eval v0.9 - MIT License -{" "}
+            go-eval v1.0 - MIT License -{" "}
             <a href="https://github.com/igcodinap/go-eval" className="text-[var(--accent)]">
               github.com/igcodinap/go-eval
             </a>

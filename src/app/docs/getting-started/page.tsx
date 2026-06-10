@@ -5,15 +5,18 @@ const useCases = [
   "RAG response quality checks in go test",
   "Deterministic output validation for JSON and artifacts",
   "Agent trajectory checks for tool-use workflows",
+  "Structured agent traces with spans, tool calls, and state deltas",
   "Ordered agent scenario contracts with per-step tool policies",
   "Tiered CI slices for critical, standard, and extended cases",
   "Profile-driven eval runs for PR, nightly, provider, and release gates",
   "Prompt or model regression checks in CI pipelines",
+  "Static HTML, Markdown, and JSON reports for review and CI artifacts",
+  "Judge calibration and A/B variant comparison",
   "Policy-aware summaries and repeatability checks for flaky judge metrics",
 ];
 
 const concepts = [
-  { term: "Case", desc: "Input, output, expected value, context, artifacts, turns, expected tool calls, metadata, and timeout." },
+  { term: "Case", desc: "Input, output, expected value, context, artifacts, turns, traces, expected tool calls, metadata, and timeout." },
   { term: "Scenario", desc: "Ordered multi-step flow with accumulated history, artifacts, state, and repeats." },
   { term: "Contract", desc: "Named group of checks that reports one business-level result." },
   { term: "Metric", desc: "Stateless scorer with thresholded pass/fail behavior." },
@@ -21,8 +24,10 @@ const concepts = [
   { term: "Runner", desc: "Executes Cases with Metrics and handles GOEVAL gating, result sinks, and assertions." },
   { term: "Artifact", desc: "Named structured JSON output checked deterministically." },
   { term: "Trajectory", desc: "Typed turns, required tools, forbidden tools, and expected tool calls." },
+  { term: "Trace", desc: "Structured agent execution with spans, tool calls, artifact records, and state deltas." },
   { term: "Eval Profiles", desc: "goeval.json run profiles for packages, tiers, result directories, and prerequisites." },
   { term: "Compare Policies", desc: "Baseline policies for score tolerances, stable case identity, and regression gates." },
+  { term: "Reports", desc: "Static HTML, Markdown, or JSON evaluation reports from JSONL result files." },
 ];
 
 const docsSections = [
@@ -35,10 +40,13 @@ const docsSections = [
   { id: "contracts", title: "Contracts" },
   { id: "artifacts", title: "Artifacts" },
   { id: "trajectory", title: "Trajectory" },
+  { id: "traces", title: "Traces" },
   { id: "tier-filtering", title: "Tier Filtering" },
   { id: "repeat", title: "Repeat" },
   { id: "eval-ops", title: "Eval Operations" },
   { id: "results", title: "Results" },
+  { id: "reports", title: "Reports" },
+  { id: "adapters", title: "Adapters" },
   { id: "cli", title: "CLI" },
   { id: "ci-cd", title: "CI/CD" },
   { id: "troubleshooting", title: "Troubleshooting" },
@@ -75,7 +83,7 @@ export default function GettingStartedPage() {
 
       <h1 className="mb-4 text-4xl font-bold">Getting Started</h1>
       <p className="text-lg text-[var(--secondary)] leading-relaxed">
-        go-eval v0.9 is an open-source evaluation toolkit for Go teams building LLM products. It runs inside <code>go test</code>, stays opt-in through <code>GOEVAL=1</code>, and covers judge metrics, deterministic checks, structured artifacts, tool trajectories, multi-step agent scenarios, profile-driven eval operations, result comparison, and policy-aware reliability summaries.
+        go-eval v1.0 is an open-source evaluation toolkit for Go teams building LLM products. It runs inside <code>go test</code>, stays opt-in through <code>GOEVAL=1</code>, and covers judge metrics, deterministic checks, structured artifacts, tool trajectories, structured agent traces, multi-step agent scenarios, profile-driven eval operations, result comparison, static reports, judge calibration, and policy-aware reliability summaries.
       </p>
 
       <nav className="mt-6 flex flex-wrap gap-2 text-sm">
@@ -334,6 +342,41 @@ r.Run(t, eval.StepBudget{MaxSteps: 1}, c)`}</code>
         </p>
       </section>
 
+      <section id="traces" className="mt-12 scroll-mt-20">
+        <h2 className="mb-4 text-2xl font-semibold border-b border-[var(--border)] pb-2">Structured Traces</h2>
+        <p className="text-[var(--secondary)]">
+          Use <code>Case.Trace</code> when your agent can emit structured spans, tool calls, artifact records, or state deltas. <code>Case.TraceID</code> and <code>Result.TraceID</code> link metric rows, scenario summaries, and trace records in downstream reports.
+        </p>
+        <pre className="mt-4 bg-[var(--code-bg)] border border-[var(--border)] rounded-md px-4 py-3 font-mono text-sm overflow-x-auto">
+          <code>{`r := eval.NewRunner(
+	judge,
+	eval.WithResultSink(eval.DefaultResultSink()),
+	eval.WithTraceSink(eval.DefaultTraceSink()),
+)
+
+c := eval.Case{
+	Input:   "Find a route and charge the card",
+	Output:  answer,
+	TraceID: "route-42",
+	Trace: &eval.Trace{
+		ID:   "route-42",
+		Name: "checkout_route",
+		Spans: []eval.Span{{
+			Name: "charge",
+			Kind: "tool_call",
+			ToolCall: &eval.ToolCall{
+				Name:      "payments.charge",
+				Arguments: json.RawMessage(\`{"amount":42}\`),
+			},
+		}},
+	},
+}`}</code>
+        </pre>
+        <p className="mt-3 text-sm text-[var(--muted)]">
+          When <code>GOEVAL_RESULTS_DIR</code> is set, <code>DefaultTraceSink</code> writes <code>traces.jsonl</code> alongside <code>results.jsonl</code>. Trace writes use the same <code>WithRedactors</code> hooks as result JSONL. Tool-call metrics and scenario tool contracts read trace tool-call spans when present, falling back to <code>Case.Turns</code> for legacy evals.
+        </p>
+      </section>
+
       <section id="tier-filtering" className="mt-12 scroll-mt-20">
         <h2 className="mb-4 text-2xl font-semibold border-b border-[var(--border)] pb-2">Tier Filtering</h2>
         <p className="text-[var(--secondary)]">
@@ -431,6 +474,62 @@ goeval summarize --policy goeval.json .eval-results/results.jsonl`}</code>
         </p>
       </section>
 
+      <section id="reports" className="mt-12 scroll-mt-20">
+        <h2 className="mb-4 text-2xl font-semibold border-b border-[var(--border)] pb-2">Reports And Calibration</h2>
+        <p className="text-[var(--secondary)]">
+          Render static HTML, Markdown, or JSON reports from JSONL result files. Use calibration to analyze judge disagreement and compare A/B variants across repeated runs.
+        </p>
+        <pre className="mt-4 bg-[var(--code-bg)] border border-[var(--border)] rounded-md px-4 py-3 font-mono text-sm overflow-x-auto">
+          <code>{`goeval report current/results.jsonl --out report.html
+goeval report --baseline old/results.jsonl --current new/results.jsonl --format markdown
+goeval calibrate --case-id-key case_id --judge-key judge current/results.jsonl
+goeval calibrate --pairwise-key variant results.jsonl`}</code>
+        </pre>
+        <p className="mt-3 text-sm text-[var(--muted)]">
+          When <code>--format</code> is omitted, <code>--out</code> must use <code>.html</code>, <code>.htm</code>, <code>.md</code>, <code>.markdown</code>, or <code>.json</code>. Calibration aggregates duplicate judge or variant rows by mean score.
+        </p>
+      </section>
+
+      <section id="adapters" className="mt-12 scroll-mt-20">
+        <h2 className="mb-4 text-2xl font-semibold border-b border-[var(--border)] pb-2">Judge Adapters</h2>
+        <p className="text-[var(--secondary)]">
+          Optional judge adapters live in separate modules so the core package stays stdlib-only. Use the Ollama adapter for local LLM-as-judge scoring, or the OpenAI adapter for cloud-based evaluation.
+        </p>
+        <pre className="mt-4 bg-[var(--code-bg)] border border-[var(--border)] rounded-md px-4 py-3 font-mono text-sm overflow-x-auto">
+          <code>{`go get github.com/igcodinap/go-eval/adapters/ollama
+go get github.com/igcodinap/go-eval/adapters/openai github.com/sashabaranov/go-openai`}</code>
+        </pre>
+        <pre className="mt-4 bg-[var(--code-bg)] border border-[var(--border)] rounded-md px-4 py-3 font-mono text-sm overflow-x-auto">
+          <code>{`import ollamaeval "github.com/igcodinap/go-eval/adapters/ollama"
+
+judge := ollamaeval.NewJudge("llama3.2")
+r := eval.NewRunner(judge)
+
+r.Run(t, eval.Faithfulness{Threshold: 0.8}, eval.Case{
+	Input:   "What is the capital of France?",
+	Output:  "Paris is the capital of France.",
+	Context: []string{"Paris is the capital of France."},
+})`}</code>
+        </pre>
+        <p className="mt-3 text-sm text-[var(--muted)]">
+          For non-default servers, configure the local endpoint with <code>ollamaeval.WithBaseURL</code>. The OpenAI adapter implements both <code>Judge</code> and <code>RawJudge</code>, enabling <code>Compound</code> metrics.
+        </p>
+        <p className="mt-4 text-[var(--secondary)]">
+          You can also implement your own <code>Judge</code> by wrapping any LLM provider. The interface requires a single method and must be safe for concurrent use:
+        </p>
+        <pre className="mt-4 bg-[var(--code-bg)] border border-[var(--border)] rounded-md px-4 py-3 font-mono text-sm overflow-x-auto">
+          <code>{`type MyJudge struct{}
+
+func (j *MyJudge) Evaluate(ctx context.Context, prompt string) (eval.JudgeResponse, error) {
+	// 1. Send prompt to an LLM.
+	// 2. Parse its JSON {"score": float, "reason": string} response.
+	// 3. Return eval.JudgeResponse{Score, Reason, Tokens}.
+	// Must be safe for concurrent use.
+	return eval.JudgeResponse{}, nil
+}`}</code>
+        </pre>
+      </section>
+
       <section id="cli" className="mt-12 scroll-mt-20">
         <h2 className="mb-4 text-2xl font-semibold border-b border-[var(--border)] pb-2">CLI</h2>
         <p className="text-[var(--secondary)]">
@@ -443,6 +542,8 @@ goeval test ./...
 goeval test --profile pr
 goeval compare --policy goeval.json old/results.jsonl new/results.jsonl
 goeval summarize --policy goeval.json current/results.jsonl
+goeval report current/results.jsonl --out report.html
+goeval calibrate --judge-key judge current/results.jsonl
 goeval version`}</code>
         </pre>
       </section>

@@ -81,6 +81,97 @@ export const metricDetails: Record<string, MetricDetail> = {
       output: pass("ContextPrecision", "retrieved context is mostly relevant"),
     },
   },
+  ContextRecall: {
+    name: "ContextRecall",
+    type: "judge",
+    purpose: "Check whether retrieved context contains the expected answer or facts",
+    howItWorks: "The judge compares Case.Expected against Case.Context and scores how well the retrieved documents cover the expected facts.",
+    threshold: "0.7",
+    example: {
+      code: `r.Run(t, eval.ContextRecall{Threshold: 0.7}, eval.Case{
+	Input:    "What's the capital of France?",
+	Expected: "Paris",
+	Context: []string{
+		"Paris is the capital of France.",
+		"Berlin is the capital of Germany.",
+	},
+})`,
+      output: pass("ContextRecall", "retrieved context covers expected answer"),
+    },
+  },
+  AnswerCorrectness: {
+    name: "AnswerCorrectness",
+    type: "judge",
+    purpose: "Verify the output matches the expected answer semantically",
+    howItWorks: "The judge compares Case.Output and Case.Expected for semantic equivalence, scoring factual overlap and accuracy.",
+    threshold: "0.7",
+    example: {
+      code: `r.Run(t, eval.AnswerCorrectness{Threshold: 0.7}, eval.Case{
+	Output:   "Paris is the capital and largest city of France.",
+	Expected: "The capital of France is Paris.",
+})`,
+      output: pass("AnswerCorrectness", "output semantically matches expected"),
+    },
+  },
+  NoiseSensitivity: {
+    name: "NoiseSensitivity",
+    type: "judge",
+    purpose: "Ensure the output ignores irrelevant or distracting retrieved context",
+    howItWorks: "The judge checks whether the output is affected by noisy or irrelevant documents in Case.Context, scoring resistance to distraction.",
+    threshold: "0.7",
+    example: {
+      code: `r.Run(t, eval.NoiseSensitivity{Threshold: 0.7}, eval.Case{
+	Input:  "What's the capital of France?",
+	Output: "Paris is the capital of France.",
+	Context: []string{
+		"Paris is the capital of France.",
+		"Tokyo is the capital of Japan.",
+		"Berlin has a population of 3.6 million.",
+	},
+})`,
+      output: pass("NoiseSensitivity", "output ignores distracting context"),
+    },
+  },
+  TaskCompletion: {
+    name: "TaskCompletion",
+    type: "judge",
+    purpose: "Verify the agent completed the user task end-to-end",
+    howItWorks: "The judge evaluates Case.Output, Case.Turns, and Case.Trace to determine whether the agent fulfilled the user request.",
+    threshold: "0.8",
+    example: {
+      code: `r.Run(t, eval.TaskCompletion{Threshold: 0.8}, eval.Case{
+	Input:  "Book a flight from Santiago to Lima for March 15.",
+	Output: "Your flight has been booked. Confirmation: ABC123.",
+	Turns: []eval.Turn{
+		{Role: eval.RoleUser, Content: "Book a flight from Santiago to Lima for March 15."},
+		{Role: eval.RoleAssistant, ToolCalls: []eval.ToolCall{
+			{Name: "flights.book", Arguments: json.RawMessage(\`{"from":"SCL","to":"LIM","date":"2026-03-15"}\`), Result: "confirmed:ABC123"},
+		}},
+	},
+})`,
+      output: pass("TaskCompletion", "agent completed the user task"),
+    },
+  },
+  PlanAdherence: {
+    name: "PlanAdherence",
+    type: "judge",
+    purpose: "Check whether the agent followed the expected plan or workflow",
+    howItWorks: "The judge reviews Case.Turns and Case.Trace spans to verify the agent executed steps in the expected order and used the right tools.",
+    threshold: "0.7",
+    example: {
+      code: `r.Run(t, eval.PlanAdherence{Threshold: 0.7}, eval.Case{
+	Input: "Find and book the cheapest flight.",
+	Turns: []eval.Turn{
+		{Role: eval.RoleUser, Content: "Find and book the cheapest flight."},
+		{Role: eval.RoleAssistant, ToolCalls: []eval.ToolCall{
+			{Name: "flights.search", Arguments: json.RawMessage(\`{"sort":"price"}\`)},
+			{Name: "flights.book", Arguments: json.RawMessage(\`{"id":"cheapest"}\`)},
+		}},
+	},
+})`,
+      output: pass("PlanAdherence", "agent followed the expected plan"),
+    },
+  },
   GEval: {
     name: "GEval",
     type: "judge",
@@ -377,6 +468,43 @@ export const metricDetails: Record<string, MetricDetail> = {
     example: {
       code: `r.Run(t, eval.StepBudget{MaxSteps: 2}, c)`,
       output: pass("StepBudget", "step budget satisfied"),
+    },
+  },
+  ToolArgumentAccuracy: {
+    name: "ToolArgumentAccuracy",
+    type: "deterministic",
+    purpose: "Verify tool names and JSON arguments match expectations",
+    howItWorks: "Compares actual tool calls from Case.Trace spans or Case.Turns against Case.ExpectedToolCalls, scoring both tool name and argument correctness without calling a Judge.",
+    threshold: "1.0",
+    example: {
+      code: `r.Run(t, eval.ToolArgumentAccuracy{Threshold: 1.0}, eval.Case{
+	Turns: []eval.Turn{
+		{Role: eval.RoleAssistant, ToolCalls: []eval.ToolCall{
+			{Name: "search", Arguments: json.RawMessage(\`{"query":"capital of France"}\`)},
+		}},
+	},
+	ExpectedToolCalls: []eval.ToolCall{
+		{Name: "search", Arguments: json.RawMessage(\`{"query":"capital of France"}\`)},
+	},
+})`,
+      output: pass("ToolArgumentAccuracy", "tool names and arguments match"),
+    },
+  },
+  StepEfficiency: {
+    name: "StepEfficiency",
+    type: "deterministic",
+    purpose: "Verify the trace stays within step and tool-call budgets",
+    howItWorks: "Reads Case.Trace spans or Case.Turns tool calls and checks that the total count and per-tool counts stay within configured limits without calling a Judge.",
+    threshold: "1.0",
+    example: {
+      code: `r.Run(t, eval.StepEfficiency{Threshold: 1.0}, eval.Case{
+	Turns: []eval.Turn{
+		{Role: eval.RoleAssistant, ToolCalls: []eval.ToolCall{
+			{Name: "search", Arguments: json.RawMessage(\`{"query":"capital"}\`)},
+		}},
+	},
+})`,
+      output: pass("StepEfficiency", "trace within step and tool-call budgets"),
     },
   },
   Repeat: {

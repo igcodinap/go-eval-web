@@ -167,7 +167,7 @@ const scenarioExample = `func TestScenario_IncrementalCompletionToReady(t *testi
 	})
 }`;
 
-const runCommands = `go install github.com/igcodinap/go-eval/cmd/goeval@v0.9.0
+const runCommands = `go install github.com/igcodinap/go-eval/cmd/goeval@v1.0.0
 
 # Run critical travel-planning evals, writing .goeval/pr/results.jsonl.
 goeval test --profile pr
