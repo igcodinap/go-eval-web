@@ -89,6 +89,15 @@ export default function DocsLayout({
               <span className="hidden sm:inline">Slack</span>
             </a>
             <a
+              href="https://deepwiki.com/igcodinap/go-eval"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex items-center gap-2 text-sm text-[var(--secondary)] hover:text-[var(--foreground)]"
+            >
+              <Image src="/deepwiki.svg" alt="DeepWiki" width={20} height={20} className="h-5 w-5 rounded" />
+              <span className="hidden sm:inline">DeepWiki</span>
+            </a>
+            <a
               href="https://github.com/igcodinap/go-eval"
               target="_blank"
               rel="noopener noreferrer"
