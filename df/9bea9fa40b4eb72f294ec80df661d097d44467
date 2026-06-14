@@ -1,0 +1,24 @@
+src/app/docs/layout.tsx
+  s_08d0e0e5da8ff9::t_d8e1eecc5cec6f 92-99
+src/app/page.tsx
+  s_08d0e0e5da8ff9::t_d8e1eecc5cec6f 160-163
+public/deepwiki.svg
+  s_08d0e0e5da8ff9::t_d922040ce2aba0 1,3-5
+  s_08d0e0e5da8ff9::t_d8e1eecc5cec6f 2,6
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.5.6",
+  "base_commit_sha": "df9bea9fa40b4eb72f294ec80df661d097d44467",
+  "prompts": {},
+  "sessions": {
+    "s_08d0e0e5da8ff9": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019ec6d7-57fa-7a80-bdb1-0e3c88d4ce0d",
+        "model": "gpt-5.5"
+      },
+      "human_author": "igcodinap <igcodinap@users.noreply.github.com>"
+    }
+  }
+}
