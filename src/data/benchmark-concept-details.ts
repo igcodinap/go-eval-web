@@ -273,7 +273,7 @@ This pattern is ideal for:
     details: `The evaluation function. Metrics implement the \`Metric\` interface and return a \`Result\` with score, pass/fail, and reasoning.
 
 Available metrics:
-- **LLM-as-Judge**: Faithfulness, Hallucination, AnswerRelevancy, ContextPrecision, ContextRecall, AnswerCorrectness, NoiseSensitivity, TaskCompletion, PlanAdherence, GEval, Compound
+- **LLM-as-Judge**: Faithfulness, Hallucination, AnswerRelevancy, ContextPrecision, ContextRecall, AnswerCorrectness, NoiseSensitivity, TaskCompletion, PlanAdherence, GEval, Rubric, Compound
 - **Deterministic**: Contains, Regex, JSONPath, FieldCount, artifact metrics, OutputLengthBudget, ToolArgumentAccuracy, StepEfficiency
 - **Trajectory**: ToolCallAccuracy, ToolCallF1, RequiredTools, ForbiddenTool, StepBudget
 - **Wrappers / groups**: Precheck, Repeat, Contract, WithTokenBudget, WithLatencyBudget
@@ -319,6 +319,101 @@ func (j *MyJudge) Evaluate(ctx context.Context, prompt string) (eval.JudgeRespon
 	// Parse response into score + reasoning
 	return parseResponse(resp)
 }`,
+	},
+  },
+  "Judge Executor": {
+    term: "Judge Executor",
+    description: "Reliable RawJudge wrapper with JSON parsing, retries, concurrency limits, caching, and diagnostics.",
+    details: `v1.1 adds \`NewJudgeExecutor\` for provider adapters that return raw model text.
+
+The executor implements \`Judge\` by calling a \`RawJudge\`, parsing responses through \`JSONJudgeParser\` by default, retrying failed attempts, limiting concurrent raw calls, caching parsed responses, and optionally writing best-effort JSONL attempt diagnostics.
+
+Cache entries are namespaced per executor by default. Use \`WithJudgeCacheNamespace\` only when multiple executors intentionally share the same judge, parser, and retry behavior.`,
+    example: {
+      code: `raw := newMyRawJudge(t)
+judge := eval.NewJudgeExecutor(
+	raw,
+	eval.WithJudgeExecutorAttempts(2),
+	eval.WithJudgeExecutorConcurrency(4),
+	eval.WithJudgeCache(eval.NewInMemoryJudgeCache()),
+	eval.WithJudgeEventSink(eval.DefaultJudgeEventSink()),
+)
+
+r := eval.NewRunner(judge)`,
+    },
+  },
+  "Post-Hoc Evaluator": {
+    term: "Post-Hoc Evaluator",
+    description: "Programmatic Metric runner for workflows outside testing.TB.",
+    details: `\`Evaluator\` runs the same \`Metric\` contract outside \`go test\`. Use it to replay saved cases, score traces after production runs, or build small evaluation utilities that need \`Result\` values without calling \`testing.TB\` methods.
+
+It supports named evaluations, per-evaluator or per-case timeouts, result sinks, trace sinks, and redactors. \`NewJSONLResultSink\` can persist ordinary result rows for later \`goeval summarize\` or \`goeval report\` commands.`,
+    example: {
+      code: `e := eval.NewEvaluator(
+	judge,
+	eval.WithEvaluatorResultSink(eval.NewJSONLResultSink("posthoc.jsonl")),
+)
+
+result, err := e.EvaluateNamed(ctx, "case/france", eval.Rubric{
+	ID:        "answer-quality",
+	Version:   "v1",
+	Criteria:  "Answer directly and accurately.",
+	Threshold: 0.8,
+}, c)`,
+    },
+  },
+  "Trace Selectors": {
+    term: "Trace Selectors",
+    description: "Helpers for turning stored Trace rows into Case values.",
+    details: `v1.1 adds \`TraceCaseSelector\` and \`TraceTextSelector\` helpers for replaying structured traces without introducing a query-language dependency.
+
+Selectors can read trace names, metadata values, first or last span input/output, named span input/output, artifact values, and state delta values. Use \`ReadTraceJSONL\` or \`ReadTraceJSONLFile\` to load trace rows before selecting cases.`,
+    example: {
+      code: `selector := eval.TraceCaseSelector{
+	Input:    eval.SpanInput("request"),
+	Output:   eval.SpanOutput("answer"),
+	Expected: eval.TraceMetadata("expected"),
+}
+
+traces, err := eval.ReadTraceJSONLFile("traces.jsonl")
+if err != nil {
+	return err
+}
+c, err := selector.CaseFromTrace(traces[0])`,
+    },
+  },
+  "Run Manifest": {
+    term: "Run Manifest",
+    description: "goeval-run.json sidecar describing one eval run.",
+    details: `v1.1 adds \`RunManifest\` and the default \`goeval-run.json\` sidecar. When \`goeval test\` runs with \`GOEVAL_RESULTS_DIR\` or a profile \`results_dir\`, it writes the manifest next to \`results.jsonl\` and \`traces.jsonl\`.
+
+The manifest records schema versions, go-eval version, command, profile, paths, package list, timing, and optional metadata. Existing results and trace readers do not require it, so it is additive for CI artifacts and audit trails.`,
+    example: {
+      code: `manifest := eval.NewRunManifest()
+manifest.GoEvalVersion = "v1.1.0"
+manifest.Profile = "pr"
+manifest.ResultsPath = ".goeval/pr/results.jsonl"
+
+err := eval.WriteRunManifest(
+	filepath.Join(".goeval/pr", eval.RunManifestFileName),
+	manifest,
+)`,
+    },
+  },
+  Rubric: {
+    term: "Rubric",
+    description: "Named, versioned custom GEval-style metric.",
+    details: `\`Rubric\` gives custom judge criteria a stable metric name and metadata. It requires an \`ID\` and \`Criteria\`, accepts optional \`Version\` and \`Steps\`, and defaults to a 0.7 threshold when none is provided.
+
+Use it when teams need reusable product rubrics that can be compared across releases without relying on anonymous \`GEval\` criteria text.`,
+    example: {
+      code: `r.Run(t, eval.Rubric{
+	ID:        "answer-quality",
+	Version:   "v1",
+	Criteria:  "Answer directly and accurately.",
+	Steps:     []string{"Check factual accuracy", "Check directness"},
+	Threshold: 0.8,
+}, c)`,
     },
   },
   Runner: {
@@ -379,7 +474,7 @@ This keeps normal behavior explicit: a runner without \`DefaultTierFilter()\` ig
   "Eval Profiles": {
     term: "Eval Profiles",
     description: "A goeval.json run shape for packages, tiers, result directories, and prerequisites.",
-    details: `v0.9 adds profile-aware eval operations through \`goeval.json\`. A profile can name packages, tiers, a result directory, and prerequisites for a specific run shape.
+    details: `Profile-aware eval operations use \`goeval.json\`. A profile can name packages, tiers, a result directory, and prerequisites for a specific run shape.
 
 Use profiles for PR smoke checks, nightly broader suites, provider-specific evals, and release gates. \`goeval test --profile\` sets \`GOEVAL=1\`, applies profile tier and result settings, checks prerequisites, then delegates to \`go test\`.`,
     example: {
@@ -426,7 +521,7 @@ goeval compare --fail-on-regression=false old.jsonl new.jsonl`,
   "Reliability Summaries": {
     term: "Reliability Summaries",
     description: "Pass rates, p95 latency/tokens, metadata groups, scenario totals, and flaky identities.",
-    details: `v0.9 summaries go beyond metric means. Summary APIs and \`goeval summarize\` can report pass rates, p95 latency and token usage, tier/flow/dataset/case groupings, scenario run totals, and repeated-case identities that look flaky.
+    details: `Reliability summaries go beyond metric means. Summary APIs and \`goeval summarize\` can report pass rates, p95 latency and token usage, tier/flow/dataset/case groupings, scenario run totals, and repeated-case identities that look flaky.
 
 Use summary policies when the same identity and flaky-score thresholds should apply across compare and summarize workflows.`,
     example: {
@@ -436,7 +531,7 @@ Use summary policies when the same identity and flaky-score thresholds should ap
   "Stable Case IDs": {
     term: "Stable Case IDs",
     description: "Case metadata identity that survives test renames across result comparisons.",
-    details: `Default comparisons match rows by test name and metric. v0.9 adds \`compare.StableCaseIDFromMetadata\` for suites that store stable IDs in metadata and need results to keep matching after test names move or change.
+    details: `Default comparisons match rows by test name and metric. Use \`compare.StableCaseIDFromMetadata\` for suites that store stable IDs in metadata and need results to keep matching after test names move or change.
 
 The conventional key is \`Case.Metadata["case_id"]\`, but policies can choose a different \`case_id_key\`. Rows without the metadata key fall back to test name and metric.`,
     example: {
@@ -467,7 +562,7 @@ r.Run(t, eval.ArtifactArrayContains{
   Trace: {
     term: "Trace",
     description: "Structured agent trace model with spans, tool calls, artifact records, and state deltas.",
-    details: `v1.0 introduces a structured trace model that captures the full execution path of an agent.
+    details: `The structured trace model captures the full execution path of an agent.
 
 \`Case.Trace\` holds a \`Trace\` with an ID, name, and ordered \`Span\` values. Each span can record tool calls, artifact writes, or state changes. \`Case.TraceID\` and \`Result.TraceID\` link metric rows, scenario summaries, and trace records in downstream reports.
 
@@ -509,7 +604,7 @@ Trace writes use the same \`WithRedactors\` hooks as result JSONL, scrubbing sen
   "Scenario Datasets": {
     term: "Scenario Datasets",
     description: "Portable JSON scenario definitions with named drivers bound in Go.",
-    details: `v1.0 adds \`LoadScenarios\`, \`DecodeScenarios\`, and \`BindScenarioDrivers\` for defining multi-step agent scenarios in JSON while keeping drivers app-owned.
+    details: `Use \`LoadScenarios\`, \`DecodeScenarios\`, and \`BindScenarioDrivers\` to define multi-step agent scenarios in JSON while keeping drivers app-owned.
 
 JSON scenarios declare name, tier, tools, repeat settings, and ordered steps with required/forbidden tool patterns, artifact keys, and max tool calls. Drivers are bound by name in Go before running.
 

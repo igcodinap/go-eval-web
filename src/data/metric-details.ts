@@ -186,6 +186,22 @@ export const metricDetails: Record<string, MetricDetail> = {
       output: pass("GEval", "rubric score met threshold"),
     },
   },
+  Rubric: {
+    name: "Rubric",
+    type: "judge",
+    purpose: "Score a named and versioned custom rubric for stable comparisons",
+    howItWorks: "Rubric uses the GEval-style prompt shape while adding rubric_id and optional rubric_version metadata to results.",
+    threshold: "0.7",
+    example: {
+      code: `r.Run(t, eval.Rubric{
+	ID:        "answer-quality",
+	Version:   "v1",
+	Criteria:  "Answer directly and accurately.",
+	Threshold: 0.8,
+}, c)`,
+      output: pass("Rubric(answer-quality)", "rubric score met threshold"),
+    },
+  },
   Compound: {
     name: "Compound",
     type: "judge",

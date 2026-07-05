@@ -167,7 +167,7 @@ const scenarioExample = `func TestScenario_IncrementalCompletionToReady(t *testi
 	})
 }`;
 
-const runCommands = `go install github.com/igcodinap/go-eval/cmd/goeval@v1.0.0
+const runCommands = `go install github.com/igcodinap/go-eval/cmd/goeval@v1.1.0
 
 # Run critical travel-planning evals, writing .goeval/pr/results.jsonl.
 goeval test --profile pr
@@ -277,7 +277,7 @@ export default function ImplementationExamplePage() {
       <section id="run" className="mt-12 scroll-mt-20">
         <h2 className="mb-4 text-2xl font-semibold border-b border-[var(--border)] pb-2">5. Run, Summarize, Compare</h2>
         <p className="text-[var(--secondary)]">
-          The same manifest powers local runs and CI gates. Normal <code>go test</code> remains fast unless the eval profile enables <code>GOEVAL=1</code>.
+          The same profile powers local runs and CI gates. Normal <code>go test</code> remains fast unless the eval profile enables <code>GOEVAL=1</code>. With a profile <code>results_dir</code>, <code>goeval test</code> writes <code>goeval-run.json</code> next to the JSONL results for audit and artifact tracking.
         </p>
         <pre className="mt-4 bg-[var(--code-bg)] border border-[var(--border)] rounded-md px-4 py-3 font-mono text-sm overflow-x-auto">
           <code>{runCommands}</code>

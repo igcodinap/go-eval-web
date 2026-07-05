@@ -27,6 +27,8 @@ const navItems = [
   { label: "Artifacts", href: "#artifacts" },
   { label: "Trajectory", href: "#trajectory" },
   { label: "Traces", href: "#traces" },
+  { label: "Judge Execution", href: "#judge-execution" },
+  { label: "Post-Hoc", href: "#posthoc" },
   { label: "Benchmarks", href: "#benchmarks" },
   { label: "Eval Operations", href: "#eval-ops" },
   { label: "Reports", href: "#reports" },
@@ -139,7 +141,7 @@ export default function Home() {
             <Link href="/" className="flex items-center gap-2">
               <Image src="/logo.png" alt="go-eval logo" width={28} height={28} className="rounded" />
               <span className="go-logo whitespace-nowrap text-lg font-bold">go-eval</span>
-              <span className="text-xs text-[var(--muted)]">v1.0</span>
+              <span className="text-xs text-[var(--muted)]">v1.1</span>
             </Link>
             <nav className="hidden min-w-0 shrink items-center gap-1 text-sm 2xl:flex">
               {headerNavItems.map((item) => (
@@ -192,13 +194,13 @@ export default function Home() {
               <h1 className="mb-4 text-4xl font-bold">go-eval</h1>
               <p className="text-xl text-[var(--secondary)]">LLM evaluation for Go, inside standard <code>go test</code>.</p>
               <p className="mt-4 text-[var(--secondary)]">
-                go-eval v1.0 combines LLM-as-judge metrics, deterministic JSON and artifact checks, typed tool trajectories, structured agent traces, multi-step agent scenarios, grouped contracts, tiered CI slices, repeatability helpers, policy-aware summaries, baseline comparison, static reports, judge calibration, and profile-driven eval operations while keeping the core stdlib-only.
+                go-eval v1.1 combines LLM-as-judge metrics, deterministic JSON and artifact checks, typed tool trajectories, structured agent traces, multi-step agent scenarios, reliable judge execution, post-hoc evaluation, run manifests, grouped contracts, tiered CI slices, repeatability helpers, policy-aware summaries, baseline comparison, static reports, judge calibration, and profile-driven eval operations while keeping the core stdlib-only.
               </p>
               <div className="mt-6 grid gap-3 md:grid-cols-3">
                 {[
                   { label: "Go-native", desc: "Runs through testing.T, benchmarks, subtests, -parallel, and CI." },
                   { label: "Agent-aware", desc: "Checks turns, tools, artifacts, traces, scenario state, and step contracts." },
-                  { label: "Ops-ready", desc: "Profiles, prerequisites, compare policies, reports, calibration, and JSONL output." },
+                  { label: "Ops-ready", desc: "Profiles, manifests, prerequisites, compare policies, reports, calibration, and JSONL output." },
                 ].map((item) => (
                   <div key={item.label} className="border border-[var(--border)] rounded-md bg-[var(--surface)] p-4">
                     <h2 className="font-mono text-sm font-semibold text-[var(--accent)]">{item.label}</h2>
@@ -480,6 +482,62 @@ c := eval.Case{
               </p>
             </section>
 
+            <section id="judge-execution" className="mb-12 scroll-mt-20">
+              <h2 className="mb-4 text-2xl font-semibold border-b border-[var(--border)] pb-2">Reliable Judge Execution</h2>
+              <p className="mb-4 text-[var(--secondary)]">
+                v1.1 adds <code>NewJudgeExecutor</code> for adapters that return raw model text. It wraps a <code>RawJudge</code> with JSON parsing, retries, concurrency limits, parsed-response caching, and best-effort JSONL attempt diagnostics.
+              </p>
+              <pre className="bg-[var(--code-bg)] border border-[var(--border)] rounded-md px-4 py-3 font-mono text-sm overflow-x-auto">
+                <code>{`raw := newMyRawJudge(t)
+judge := eval.NewJudgeExecutor(
+	raw,
+	eval.WithJudgeExecutorAttempts(2),
+	eval.WithJudgeExecutorConcurrency(4),
+	eval.WithJudgeCache(eval.NewInMemoryJudgeCache()),
+	eval.WithJudgeEventSink(eval.DefaultJudgeEventSink()),
+)
+
+r := eval.NewRunner(judge)`}</code>
+              </pre>
+              <p className="mt-3 text-sm text-[var(--muted)]">
+                The default <code>JSONJudgeParser</code> accepts <code>{`{"score": 0.82, "reason": "brief explanation"}`}</code>. Diagnostic sink failures and panics do not fail otherwise valid evals.
+              </p>
+            </section>
+
+            <section id="posthoc" className="mb-12 scroll-mt-20">
+              <h2 className="mb-4 text-2xl font-semibold border-b border-[var(--border)] pb-2">Post-Hoc Evaluation</h2>
+              <p className="mb-4 text-[var(--secondary)]">
+                Use <code>Evaluator</code> when a workflow needs the same <code>Metric</code> contract outside <code>testing.TB</code>. v1.1 also adds trace selectors for replaying stored traces and a deterministic <code>goeval eval</code> command for JSON datasets.
+              </p>
+              <pre className="bg-[var(--code-bg)] border border-[var(--border)] rounded-md px-4 py-3 font-mono text-sm overflow-x-auto">
+                <code>{`e := eval.NewEvaluator(
+	judge,
+	eval.WithEvaluatorResultSink(eval.NewJSONLResultSink("posthoc.jsonl")),
+)
+
+result, err := e.EvaluateNamed(ctx, "case/france", eval.Rubric{
+	ID:        "answer-quality",
+	Version:   "v1",
+	Criteria:  "Answer directly and accurately.",
+	Threshold: 0.8,
+}, c)`}</code>
+              </pre>
+              <pre className="mt-4 bg-[var(--code-bg)] border border-[var(--border)] rounded-md px-4 py-3 font-mono text-sm overflow-x-auto">
+                <code>{`selector := eval.TraceCaseSelector{
+	Input:    eval.SpanInput("request"),
+	Output:   eval.SpanOutput("answer"),
+	Expected: eval.TraceMetadata("expected"),
+}
+
+traces, err := eval.ReadTraceJSONLFile("traces.jsonl")
+c, err := selector.CaseFromTrace(traces[0])`}</code>
+              </pre>
+              <pre className="mt-4 bg-[var(--code-bg)] border border-[var(--border)] rounded-md px-4 py-3 font-mono text-sm overflow-x-auto">
+                <code>{`goeval eval --metric contains --dataset testdata/cases.json --out posthoc.jsonl
+goeval summarize posthoc.jsonl`}</code>
+              </pre>
+            </section>
+
             <section id="benchmarks" className="mb-12 scroll-mt-20">
               <h2 className="mb-4 text-2xl font-semibold border-b border-[var(--border)] pb-2">Benchmarks</h2>
               <p className="mb-4 text-[var(--secondary)]">
@@ -516,7 +574,7 @@ c := eval.Case{
             <section id="eval-ops" className="mb-12 scroll-mt-20">
               <h2 className="mb-4 text-2xl font-semibold border-b border-[var(--border)] pb-2">Eval Operations</h2>
               <p className="mb-4 text-[var(--secondary)]">
-                v1.0 adds an operations layer for repeatable eval runs: define <code>goeval.json</code> profiles, preflight prerequisites, run profile-aware tests, and apply the same policy to compare and summarize commands.
+                The operations layer supports repeatable eval runs: define <code>goeval.json</code> profiles, preflight prerequisites, run profile-aware tests, write run manifests, and apply the same policy to compare and summarize commands.
               </p>
               <div className="mb-4 grid gap-3 md:grid-cols-2">
                 {[
@@ -567,6 +625,9 @@ goeval compare --policy goeval.json --format json old/results.jsonl new/results.
 goeval compare --fail-on-regression=false old/results.jsonl new/results.jsonl
 goeval summarize --policy goeval.json new/results.jsonl`}</code>
               </pre>
+              <p className="mt-3 text-sm text-[var(--muted)]">
+                When a profile or <code>GOEVAL_RESULTS_DIR</code> sets a results directory, <code>goeval test</code> writes <code>goeval-run.json</code> with schema versions, command, profile, paths, package list, and timing metadata.
+              </p>
             </section>
 
             <section id="reports" className="mb-12 scroll-mt-20">
@@ -666,6 +727,7 @@ func (j *MyJudge) Evaluate(ctx context.Context, prompt string) (eval.JudgeRespon
                   { cmd: "goeval summarize --policy goeval.json current/results.jsonl", desc: "Summarize pass rates, p95 latency/tokens, metadata groups, scenario totals, and flaky identities." },
                   { cmd: "goeval report current/results.jsonl --out report.html", desc: "Render static HTML, Markdown, or JSON reports from JSONL result files." },
                   { cmd: "goeval calibrate --judge-key judge current/results.jsonl", desc: "Analyze judge disagreement, aggregate duplicate rows, and compare A/B variants." },
+                  { cmd: "goeval eval --metric contains --dataset cases.json --out posthoc.jsonl", desc: "Run deterministic post-hoc checks over JSON datasets and emit normal result JSONL." },
                   { cmd: "goeval version", desc: "Print CLI version information." },
                 ].map((item) => (
                   <div key={item.cmd} className="border border-[var(--border)] rounded-md p-4 bg-[var(--surface)]">
@@ -689,7 +751,12 @@ func (j *MyJudge) Evaluate(ctx context.Context, prompt string) (eval.JudgeRespon
                   { term: "Artifacts", desc: "Named structured JSON outputs for deterministic workflow checks." },
                   { term: "Trajectory", desc: "Typed turns and tool calls for agent path evaluation." },
                   { term: "Trace", desc: "Structured agent execution with spans, tool calls, artifact records, and state deltas." },
+                  { term: "Judge Executor", desc: "RawJudge wrapper with JSON parsing, retries, concurrency limits, cache, and diagnostics." },
+                  { term: "Post-Hoc Evaluator", desc: "Programmatic metric runner for stored cases or traces outside testing.TB." },
+                  { term: "Trace Selectors", desc: "Helpers for mapping stored trace fields into Case input, output, expected, and context." },
+                  { term: "Run Manifest", desc: "goeval-run.json sidecar with schema versions, command, profile, paths, and timing metadata." },
                   { term: "Metric", desc: "A stateless scoring function with thresholded pass/fail behavior." },
+                  { term: "Rubric", desc: "Named and versioned custom GEval-style judge metric." },
                   { term: "Precheck", desc: "Conditional wrapper that gates expensive metrics behind cheap checks." },
                   { term: "Repeat", desc: "Wrapper for repeated runs, pass-rate aggregation, and score variance." },
                   { term: "Eval Profiles", desc: "Named goeval.json run shapes for packages, tiers, results, and prerequisites." },
@@ -725,7 +792,7 @@ func (j *MyJudge) Evaluate(ctx context.Context, prompt string) (eval.JudgeRespon
       <footer className="border-t border-[var(--border)] bg-[var(--surface)]">
         <div className="mx-auto max-w-7xl px-4 py-6 md:px-8">
           <p className="text-sm text-[var(--muted)]">
-            go-eval v1.0 - MIT License -{" "}
+            go-eval v1.1 - MIT License -{" "}
             <a href="https://github.com/igcodinap/go-eval" className="text-[var(--accent)]">github.com/igcodinap/go-eval</a>
           </p>
         </div>

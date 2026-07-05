@@ -91,9 +91,11 @@ consistently:
 
 ## Versioning
 
-Current stable version: **v0.2** (released 2026-04-22)
+Current stable version: **v1.1.0** (released 2026-07-05)
 
-See CHANGELOG.md for unreleased changes planned for v0.3:
-- Conversation evaluation model
-- YAML loader submodule
-- Additional adapters (Genkit, Ollama)
+Latest v1.1 highlights:
+- Judge executor layer with JSON parsing, retries, concurrency limits, caching, and diagnostics
+- Programmatic post-hoc evaluator and trace selector helpers
+- Run manifest sidecar support via `goeval-run.json`
+- Deterministic post-hoc `goeval eval` command
+- Versioned custom `Rubric` metric

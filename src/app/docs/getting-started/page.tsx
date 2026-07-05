@@ -6,9 +6,12 @@ const useCases = [
   "Deterministic output validation for JSON and artifacts",
   "Agent trajectory checks for tool-use workflows",
   "Structured agent traces with spans, tool calls, and state deltas",
+  "Reliable RawJudge execution with parsing, retries, caching, and diagnostics",
+  "Post-hoc evaluation over stored cases and traces",
   "Ordered agent scenario contracts with per-step tool policies",
   "Tiered CI slices for critical, standard, and extended cases",
   "Profile-driven eval runs for PR, nightly, provider, and release gates",
+  "Run manifest sidecars for CI artifacts and audit trails",
   "Prompt or model regression checks in CI pipelines",
   "Static HTML, Markdown, and JSON reports for review and CI artifacts",
   "Judge calibration and A/B variant comparison",
@@ -25,6 +28,10 @@ const concepts = [
   { term: "Artifact", desc: "Named structured JSON output checked deterministically." },
   { term: "Trajectory", desc: "Typed turns, required tools, forbidden tools, and expected tool calls." },
   { term: "Trace", desc: "Structured agent execution with spans, tool calls, artifact records, and state deltas." },
+  { term: "Judge Executor", desc: "RawJudge wrapper with JSON parsing, retries, concurrency limits, cache, and diagnostics." },
+  { term: "Post-Hoc Evaluator", desc: "Programmatic metric runner for stored cases or traces outside testing.TB." },
+  { term: "Trace Selectors", desc: "Helpers for mapping stored trace fields into Case input, output, expected, and context." },
+  { term: "Run Manifest", desc: "goeval-run.json sidecar with schema versions, command, profile, paths, and timing metadata." },
   { term: "Eval Profiles", desc: "goeval.json run profiles for packages, tiers, result directories, and prerequisites." },
   { term: "Compare Policies", desc: "Baseline policies for score tolerances, stable case identity, and regression gates." },
   { term: "Reports", desc: "Static HTML, Markdown, or JSON evaluation reports from JSONL result files." },
@@ -41,6 +48,8 @@ const docsSections = [
   { id: "artifacts", title: "Artifacts" },
   { id: "trajectory", title: "Trajectory" },
   { id: "traces", title: "Traces" },
+  { id: "judge-execution", title: "Judge Execution" },
+  { id: "posthoc", title: "Post-Hoc" },
   { id: "tier-filtering", title: "Tier Filtering" },
   { id: "repeat", title: "Repeat" },
   { id: "eval-ops", title: "Eval Operations" },
@@ -83,7 +92,7 @@ export default function GettingStartedPage() {
 
       <h1 className="mb-4 text-4xl font-bold">Getting Started</h1>
       <p className="text-lg text-[var(--secondary)] leading-relaxed">
-        go-eval v1.0 is an open-source evaluation toolkit for Go teams building LLM products. It runs inside <code>go test</code>, stays opt-in through <code>GOEVAL=1</code>, and covers judge metrics, deterministic checks, structured artifacts, tool trajectories, structured agent traces, multi-step agent scenarios, profile-driven eval operations, result comparison, static reports, judge calibration, and policy-aware reliability summaries.
+        go-eval v1.1 is an open-source evaluation toolkit for Go teams building LLM products. It runs inside <code>go test</code>, stays opt-in through <code>GOEVAL=1</code>, and covers judge metrics, deterministic checks, structured artifacts, tool trajectories, structured agent traces, reliable judge execution, post-hoc evaluation, run manifests, multi-step agent scenarios, profile-driven eval operations, result comparison, static reports, judge calibration, and policy-aware reliability summaries.
       </p>
 
       <nav className="mt-6 flex flex-wrap gap-2 text-sm">
@@ -377,6 +386,68 @@ c := eval.Case{
         </p>
       </section>
 
+      <section id="judge-execution" className="mt-12 scroll-mt-20">
+        <h2 className="mb-4 text-2xl font-semibold border-b border-[var(--border)] pb-2">Reliable Judge Execution</h2>
+        <p className="text-[var(--secondary)]">
+          Wrap a <code>RawJudge</code> with <code>NewJudgeExecutor</code> when the provider returns raw model text. The executor adds strict JSON parsing, retries, concurrency limits, parsed-response caching, and optional JSONL attempt diagnostics.
+        </p>
+        <pre className="mt-4 bg-[var(--code-bg)] border border-[var(--border)] rounded-md px-4 py-3 font-mono text-sm overflow-x-auto">
+          <code>{`raw := newMyRawJudge(t)
+judge := eval.NewJudgeExecutor(
+	raw,
+	eval.WithJudgeExecutorAttempts(2),
+	eval.WithJudgeExecutorConcurrency(4),
+	eval.WithJudgeCache(eval.NewInMemoryJudgeCache()),
+	eval.WithJudgeEventSink(eval.DefaultJudgeEventSink()),
+)
+
+r := eval.NewRunner(judge)`}</code>
+        </pre>
+        <p className="mt-3 text-sm text-[var(--muted)]">
+          Cache entries are isolated per executor by default. Use <code>WithJudgeCacheNamespace</code> only when executors intentionally share the same judge, parser, and retry configuration.
+        </p>
+      </section>
+
+      <section id="posthoc" className="mt-12 scroll-mt-20">
+        <h2 className="mb-4 text-2xl font-semibold border-b border-[var(--border)] pb-2">Post-Hoc Evaluation</h2>
+        <p className="text-[var(--secondary)]">
+          Use <code>Evaluator</code> when you want the same metric contract outside <code>testing.TB</code>, such as replaying saved cases or turning stored traces into evaluation cases.
+        </p>
+        <pre className="mt-4 bg-[var(--code-bg)] border border-[var(--border)] rounded-md px-4 py-3 font-mono text-sm overflow-x-auto">
+          <code>{`e := eval.NewEvaluator(
+	judge,
+	eval.WithEvaluatorResultSink(eval.NewJSONLResultSink("posthoc.jsonl")),
+)
+
+result, err := e.EvaluateNamed(ctx, "case/france", eval.Rubric{
+	ID:        "answer-quality",
+	Version:   "v1",
+	Criteria:  "Answer directly and accurately.",
+	Threshold: 0.8,
+}, c)`}</code>
+        </pre>
+        <pre className="mt-4 bg-[var(--code-bg)] border border-[var(--border)] rounded-md px-4 py-3 font-mono text-sm overflow-x-auto">
+          <code>{`selector := eval.TraceCaseSelector{
+	Input:    eval.SpanInput("request"),
+	Output:   eval.SpanOutput("answer"),
+	Expected: eval.TraceMetadata("expected"),
+}
+
+traces, err := eval.ReadTraceJSONLFile("traces.jsonl")
+if err != nil {
+	return err
+}
+c, err := selector.CaseFromTrace(traces[0])`}</code>
+        </pre>
+        <pre className="mt-4 bg-[var(--code-bg)] border border-[var(--border)] rounded-md px-4 py-3 font-mono text-sm overflow-x-auto">
+          <code>{`goeval eval --metric contains --dataset testdata/cases.json --out posthoc.jsonl
+goeval summarize posthoc.jsonl`}</code>
+        </pre>
+        <p className="mt-3 text-sm text-[var(--muted)]">
+          The <code>goeval eval</code> command supports deterministic <code>contains</code>, <code>regex</code>, <code>jsonpath</code>, and <code>field-count</code> checks over JSON datasets.
+        </p>
+      </section>
+
       <section id="tier-filtering" className="mt-12 scroll-mt-20">
         <h2 className="mb-4 text-2xl font-semibold border-b border-[var(--border)] pb-2">Tier Filtering</h2>
         <p className="text-[var(--secondary)]">
@@ -457,7 +528,7 @@ goeval test --profile google --config goeval.json -run Route`}</code>
       <section id="results" className="mt-12 scroll-mt-20">
         <h2 className="mb-4 text-2xl font-semibold border-b border-[var(--border)] pb-2">Save And Compare Results</h2>
         <p className="text-[var(--secondary)]">
-          Add a result sink to persist JSONL rows. v0.9 can compare two result files with policy tolerances, summarize reliability from one result file, match stable case IDs across test renames, and write scenario summary rows for multi-step runs. Use <code>WithRedactors</code> when reasons or metadata may contain sensitive IDs.
+          Add a result sink to persist JSONL rows. go-eval can compare two result files with policy tolerances, summarize reliability from one result file, match stable case IDs across test renames, and write scenario summary rows for multi-step runs. Use <code>WithRedactors</code> when reasons or metadata may contain sensitive IDs.
         </p>
         <pre className="mt-4 bg-[var(--code-bg)] border border-[var(--border)] rounded-md px-4 py-3 font-mono text-sm overflow-x-auto">
           <code>{`r := eval.NewRunner(judge, eval.WithResultSink(eval.DefaultResultSink()))`}</code>
@@ -470,7 +541,7 @@ goeval compare --fail-on-regression=false old.jsonl new.jsonl
 goeval summarize --policy goeval.json .eval-results/results.jsonl`}</code>
         </pre>
         <p className="mt-3 text-sm text-[var(--muted)]">
-          Use <code>compare.StableCaseIDFromMetadata</code>, or a compare policy <code>case_id_key</code>, when the conventional <code>Case.Metadata[&quot;case_id&quot;]</code> key should identify rows across test renames.
+          Use <code>compare.StableCaseIDFromMetadata</code>, or a compare policy <code>case_id_key</code>, when the conventional <code>Case.Metadata[&quot;case_id&quot;]</code> key should identify rows across test renames. When <code>goeval test</code> writes into a results directory, it also writes <code>goeval-run.json</code> with schema versions, command, profile, paths, package list, and timing metadata.
         </p>
       </section>
 
@@ -544,6 +615,7 @@ goeval compare --policy goeval.json old/results.jsonl new/results.jsonl
 goeval summarize --policy goeval.json current/results.jsonl
 goeval report current/results.jsonl --out report.html
 goeval calibrate --judge-key judge current/results.jsonl
+goeval eval --metric contains --dataset testdata/cases.json --out posthoc.jsonl
 goeval version`}</code>
         </pre>
       </section>

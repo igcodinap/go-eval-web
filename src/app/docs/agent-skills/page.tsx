@@ -18,12 +18,20 @@ const patterns = [
     body: "Use RunScenario when step order, state, accumulated artifacts, expected failures, or per-step tool policy matters.",
   },
   {
+    title: "Reliable Judges",
+    body: "Use NewJudgeExecutor for RawJudge parsing, retries, concurrency limits, caching, and best-effort diagnostics.",
+  },
+  {
+    title: "Post-Hoc Review",
+    body: "Use Evaluator, trace selectors, and goeval eval when reviewing stored cases or traces outside testing.TB.",
+  },
+  {
     title: "Repeatability",
     body: "Use Repeat, RepeatN, or ScenarioRepeat when nondeterminism needs a pass-rate guard instead of one sample.",
   },
   {
     title: "Eval Profiles",
-    body: "Use goeval.json profiles, prerequisites, compare policies, and summary policies when suites need repeatable PR, nightly, provider, or release-gate runs.",
+    body: "Use goeval.json profiles, prerequisites, run manifests, compare policies, and summary policies when suites need repeatable PR, nightly, provider, or release-gate runs.",
   },
   {
     title: "Budgets & Tiers",
@@ -46,7 +54,7 @@ export default function AgentSkillsPage() {
 
       <h1 className="mb-4 text-4xl font-bold">Agent Skills</h1>
       <p className="text-lg text-[var(--secondary)] leading-relaxed">
-        Guides for coding agents that need to author, run, or review go-eval v0.9 suites.
+        Guides for coding agents that need to author, run, or review go-eval v1.1 suites.
       </p>
 
       <div className="mt-8 grid gap-6 md:grid-cols-2">
@@ -84,7 +92,7 @@ export default function AgentSkillsPage() {
       </div>
 
       <section className="mt-8 p-4 border border-[var(--border)] rounded-md bg-[var(--surface)]">
-        <h2 className="text-sm font-semibold text-[var(--muted)] uppercase tracking-wide mb-3">Key v0.9 Patterns</h2>
+        <h2 className="text-sm font-semibold text-[var(--muted)] uppercase tracking-wide mb-3">Key v1.1 Patterns</h2>
         <div className="grid gap-4 md:grid-cols-3">
           {patterns.map((pattern) => (
             <div key={pattern.title}>
