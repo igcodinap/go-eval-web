@@ -1,0 +1,47 @@
+src/app/docs/implementation-example/page.tsx
+  s_f6c1191a42ecef::t_7674094707387d 170,280
+src/data/benchmark-concept-details.ts
+  s_f6c1191a42ecef::t_0a495fc593baa5 276,322-416
+  s_f6c1191a42ecef::t_c0e95cf0629ff9 477,524,534,565,607
+src/data/metric-details.ts
+  s_f6c1191a42ecef::t_179198f972dd37 189-204
+AGENTS.md
+  s_f6c1191a42ecef::t_0fe7240d708b6e 94-101
+src/app/docs/changelog/page.tsx
+  s_f6c1191a42ecef::t_6cd8cd5a142053 5-31
+  s_70680892794cae::t_80a567b7081e91 4
+src/app/page.tsx
+  s_f6c1191a42ecef::t_d5c8a7363af74d 30-31,144,197,203,485-502,504-540,577,628-630,730,754-757,759,795
+  s_f6c1191a42ecef::t_5ec85089bcb3c7 503
+src/app/docs/agent-skills/page.tsx
+  s_f6c1191a42ecef::t_393914a1d333b3 20-27,34,57,95
+src/app/docs/getting-started/page.tsx
+  s_f6c1191a42ecef::t_9c3efcf68ce66a 9-10,14,31-34,51-52,95,389-450,531,544,618
+src/app/docs/layout.tsx
+  s_f6c1191a42ecef::t_72bd293854d55b 40,49
+  s_f6c1191a42ecef::t_ce842f95ad176f 151
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "e52179b4cb3b19ae0159989d5e44058652db269e",
+  "prompts": {},
+  "sessions": {
+    "s_70680892794cae": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019f2fa7-cbb2-7c00-b63d-3610ca072770",
+        "model": "gpt-5.5"
+      },
+      "human_author": "igcodinap <igcodinap@users.noreply.github.com>"
+    },
+    "s_f6c1191a42ecef": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019f3458-dd96-7852-b074-91a9960a92d0",
+        "model": "gpt-5.5"
+      },
+      "human_author": "igcodinap <igcodinap@users.noreply.github.com>"
+    }
+  }
+}
